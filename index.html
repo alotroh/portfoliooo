@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TROHA — веб-дизайн и разработка</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;700;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ══════════ ВХОД: РАКОРД ══════════
+     Чёрно-белый ракорд, как в начале киноплёнки: прицел, бегущая
+     стрелка и имя, которое ею же и проявляется. Связывает вход
+     со второй секцией, где лента уже настоящая.                  -->
+<div class="leader" id="leader">
+  <svg class="leader__marks" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <circle cx="50" cy="50" r="36" fill="none" stroke="#eceae4" stroke-width=".22" opacity=".5"/>
+    <circle cx="50" cy="50" r="25" fill="none" stroke="#eceae4" stroke-width=".22" opacity=".3"/>
+    <line x1="50" y1="-30" x2="50" y2="130" stroke="#eceae4" stroke-width=".22" opacity=".28"/>
+    <line x1="-30" y1="50" x2="130" y2="50" stroke="#eceae4" stroke-width=".22" opacity=".28"/>
+  </svg>
+
+  <span class="leader__sweep" id="leaderSweep" aria-hidden="true"></span>
+
+  <div class="leader__word" id="leaderWord">TROHA</div>
+  <span class="leader__sub label" id="leaderSub">Веб-дизайн · Разработка</span>
+
+  <span class="leader__corner leader__corner--tl label">TROHA · 2026</span>
+  <span class="leader__corner leader__corner--br label" id="leaderFrame">кадр 000</span>
+  <span class="leader__grain" aria-hidden="true"></span>
+</div>
+
+
+<!-- ─────────── КУРСОР ─────────── -->
+<div class="cursor" id="cursor"><span id="cursorTxt"></span></div>
+
+<!-- ДЕМО: прогресс-полоса, её можно тащить -->
+<div class="prog" id="prog">
+  <div class="prog__track" id="progTrack">
+    <span class="prog__fill" id="progFill"></span>
+    <span class="prog__knob" id="progKnob"></span>
+  </div>
+  <span class="prog__pct label" id="progPct">0%</span>
+</div>
+
+<!-- ─────────── ШАПКА ─────────── -->
+<header class="nav" id="nav">
+  <a class="nav__brand label" href="#top">TROHA<sup>®</sup></a>
+  <nav class="nav__mid label">
+    <a href="#works">Работы</a>
+    <a href="#about">О себе</a>
+  </nav>
+  <div class="nav__right">
+    <a class="nav__cta label" href="https://t.me/ceoofmembers" target="_blank" rel="noopener">Телеграм <i></i></a>
+    <a class="nav__soc label" href="https://instagram.com/trohantrohan" target="_blank" rel="noopener">Инстаграм</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ─────────── ГЕРОЙ ─────────── -->
+<section class="hero" id="hero">
+
+  <div class="hero__media" id="heroMedia">
+    <video id="heroVideo" src="media/hero.mp4" autoplay muted loop playsinline preload="auto"></video>
+    <canvas id="ripple"></canvas>
+    <div class="fakevid" id="fakevid"><i></i><i></i><i></i></div>
+    <div class="veil"></div>
+    <div class="grain"></div>
+  </div>
+
+  <!-- выбивка: тёмная плашка с дырами в форме букв -->
+  <svg class="hero__knock" id="knock" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <mask id="knockMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="900">
+        <rect width="1440" height="900" fill="#fff"/>
+        <text id="knockText" x="720" y="545" text-anchor="middle"
+              font-family="Unbounded" font-weight="800" font-size="400"
+              letter-spacing="-14" fill="#000">TROHA</text>
+      </mask>
+    </defs>
+    <rect width="1440" height="900" mask="url(#knockMask)"/>
+  </svg>
+
+  <h1 class="sr">TROHA — веб-дизайн и разработка</h1>
+
+  <div class="hero__bottom">
+    <div class="hero__line"></div>
+    <div class="hero__meta">
+      <div class="col"><span class="line"><span class="line__in label">Веб-дизайн · Разработка</span></span></div>
+      <div class="col wide"><span class="line"><span class="line__in">Собираю бренд целиком — от первого экрана до последней анимации.</span></span></div>
+      <div class="col"><span class="line"><span class="line__in label">7 сделок за первый месяц<br>у первого клиента</span></span></div>
+      <div class="col right"><span class="line"><span class="line__in label">Листай вниз ↓</span></span></div>
+    </div>
+  </div>
+</section>
+
+
+
+
+<!-- ══════════ ДЕМО: ПЛЁНКА → ТЕЛЕФОН → КОНФЕТТИ ══════════ -->
+<section class="reel" id="reel">
+  <!-- фон: не ролик, а свет проектора — он следует из самой плёнки -->
+  <div class="reel__bg" aria-hidden="true">
+    <span class="reel__beam"></span>
+    <span class="reel__dust"></span>
+  </div>
+
+  <div class="reel__stage" id="reelStage">
+
+    <div class="reel__head">
+      <span class="label">Что я уже сделал</span>
+      <span class="label reel__count"><b id="reelNum">01</b> / 06</span>
+    </div>
+
+    <div class="reel__mid">
+      <!-- плёнка — только оформление, кадры лежат отдельно и не режутся -->
+      <div class="reel__film" id="reelFilm">
+        <span class="reel__perf reel__perf--top"></span>
+        <span class="reel__perf reel__perf--bot"></span>
+        <span class="reel__grain"></span>
+      </div>
+
+      <div class="reel__deck" id="reelDeck">
+        <figure class="shot" data-name="VANTA" data-cat="Автомобильный дом · 2026">
+          <span class="shot__bar"><i></i><i></i><i></i></span>
+          <img src="media/shots/vanta.jpg" alt="Сайт VANTA">
+        </figure>
+        <figure class="shot" data-name="NØR" data-cat="Мода · AW26">
+          <span class="shot__bar"><i></i><i></i><i></i></span>
+          <img src="media/shots/nor.webp" alt="Сайт NØR">
+        </figure>
+        <figure class="shot" data-name="Елена" data-cat="Недвижимость · 7 сделок за месяц">
+          <span class="shot__bar"><i></i><i></i><i></i></span>
+          <img src="media/shots/elena.webp" alt="Сайт риелтора Елены">
+        </figure>
+        <figure class="shot" data-name="TROHAMBURGER" data-cat="Крафтовые бургеры · 2025">
+          <span class="shot__bar"><i></i><i></i><i></i></span>
+          <img src="media/shots/burger.webp" alt="Сайт TROHAMBURGER">
+        </figure>
+        <figure class="shot" data-name="PlusLead" data-cat="Возврат клиентов · SaaS">
+          <span class="shot__bar"><i></i><i></i><i></i></span>
+          <img src="media/shots/pluslead.webp" alt="Сайт PlusLead">
+        </figure>
+        <figure class="shot" data-name="BEAUTYTROH" data-cat="Студия красоты · 2025">
+          <span class="shot__bar"><i></i><i></i><i></i></span>
+          <img src="media/shots/beauty.webp" alt="Сайт студии BEAUTYTROH">
+        </figure>
+      </div>
+
+      <!-- телефон вне плёнки, поэтому его края ничем не срезает -->
+      <div class="phone" id="reelPhone">
+        <span class="phone__screen">
+          <video id="phoneVid" src="media/phone.mp4" muted loop playsinline
+                 poster="media/shots/beauty.webp"></video>
+        </span>
+        <span class="phone__notch"></span>
+      </div>
+    </div>
+
+    <div class="reel__foot">
+      <p class="reel__name" id="reelName">VANTA</p>
+      <p class="reel__cat label" id="reelCat">Автомобильный дом · 2026</p>
+    </div>
+
+  </div>
+</section>
+<!-- ══════════ /ЛЕНТА ══════════ -->
+
+<!-- ─────────── ПОЛЕ ЛЕТАЮЩИХ КАРТОЧЕК ─────────── -->
+<section class="field" id="works">
+  <!-- фоновое видео секции; если файла нет — остаётся световой градиент -->
+  <div class="field__bg">
+    <video id="fieldVideo" src="media/field.mp4" autoplay muted loop playsinline preload="auto"></video>
+  </div>
+
+  <div class="field__head">
+    <span class="label">Избранные работы</span>
+    <span class="label">(06) · нажми, чтобы открыть</span>
+  </div>
+
+  <h2 class="field__title" data-split>Смотри, что я умею</h2>
+
+  <div class="field__stage" id="stage">
+
+    <a class="card" href="https://testrepo-one-livid.vercel.app/" target="_blank" rel="noopener"
+       style="--x:7%;--y:14%;--ry:32deg;--rx:-7deg;--rz:-5deg;--s:.78;--d:.35;--dur:19s">
+      <span class="card__idx label">01</span>
+      <span class="card__shot"><img src="media/shots/vanta.jpg" alt="Сайт VANTA" loading="lazy"></span>
+      <span class="card__name">VANTA</span>
+      <span class="card__cat label">Автомобильный дом</span>
+      <span class="card__desc">Каталог редких машин: фильтры по марке и цене, карточка с характеристиками и пробегом. Тёмная кинематографичная подача.</span>
+      <span class="card__foot label"><i>Собственный проект</i><i>2026</i></span>
+    </a>
+
+    <a class="card" href="https://nor-delta.vercel.app/" target="_blank" rel="noopener"
+       style="--x:26%;--y:52%;--ry:-24deg;--rx:5deg;--rz:4deg;--s:.92;--d:.62;--dur:23s">
+      <span class="card__idx label">02</span>
+      <span class="card__shot"><img src="media/shots/nor.webp" alt="Сайт NØR" loading="lazy"></span>
+      <span class="card__name">NØR</span>
+      <span class="card__cat label">Мода · AW26</span>
+      <span class="card__desc">Лукбук коллекции осень–зима: полноэкранные образы, два языка, вся нагрузка на типографику и воздух.</span>
+      <span class="card__foot label"><i>Собственный проект</i><i>2026</i></span>
+    </a>
+
+    <a class="card is-client" href="https://elena-rieltor-neon.vercel.app/" target="_blank" rel="noopener"
+       style="--x:47%;--y:20%;--ry:14deg;--rx:-4deg;--rz:-2deg;--s:1.04;--d:.85;--dur:17s">
+      <span class="card__idx label">03</span>
+      <span class="card__shot"><img src="media/shots/elena.webp" alt="Сайт риелтора Елены" loading="lazy"></span>
+      <span class="card__name">Елена</span>
+      <span class="card__cat label">Недвижимость, Москва</span>
+      <span class="card__desc">Лендинг частного риелтора: заявка в два действия, объекты, отзывы. За первый месяц принёс 7 сделок.</span>
+      <span class="card__foot label"><i>Клиент · 7 сделок</i><i>2025</i></span>
+    </a>
+
+    <a class="card" href="https://trohamburger.vercel.app/" target="_blank" rel="noopener"
+       style="--x:68%;--y:58%;--ry:-31deg;--rx:8deg;--rz:5deg;--s:.86;--d:.5;--dur:21s">
+      <span class="card__idx label">04</span>
+      <span class="card__shot"><img src="media/shots/burger.jpg" alt="Сайт TROHAMBURGER" loading="lazy"></span>
+      <span class="card__name">TROHAMBURGER</span>
+      <span class="card__cat label">Крафтовые бургеры</span>
+      <span class="card__desc">Сайт бургерной: меню по категориям, акции по времени суток, крупная типографика и аппетитный свет на съёмке.</span>
+      <span class="card__foot label"><i>Собственный проект</i><i>2025</i></span>
+    </a>
+
+    <a class="card" href="https://ai-revenue-recovery-amber.vercel.app/" target="_blank" rel="noopener"
+       style="--x:84%;--y:12%;--ry:-41deg;--rx:-6deg;--rz:3deg;--s:.7;--d:.28;--dur:25s">
+      <span class="card__idx label">05</span>
+      <span class="card__shot"><img src="media/shots/pluslead.webp" alt="Сайт PlusLead" loading="lazy"></span>
+      <span class="card__name">PlusLead</span>
+      <span class="card__cat label">Возврат клиентов</span>
+      <span class="card__desc">Промо SaaS-платформы: механика возврата клиентов, кейсы с цифрами, форма на демо.</span>
+      <span class="card__foot label"><i>Собственный проект</i><i>2025</i></span>
+    </a>
+
+    <a class="card" href="https://beautytroh.vercel.app/" target="_blank" rel="noopener"
+       style="--x:13%;--y:74%;--ry:27deg;--rx:6deg;--rz:-6deg;--s:.74;--d:.4;--dur:22s">
+      <span class="card__idx label">06</span>
+      <span class="card__shot"><img src="media/shots/beauty.jpg" alt="Сайт студии BEAUTYTROH" loading="lazy"></span>
+      <span class="card__name">BEAUTYTROH</span>
+      <span class="card__cat label">Студия красоты</span>
+      <span class="card__desc">Сайт студии красоты: услуги с ценами, мастера, онлайн-запись. Тёмная вечерняя палитра с неоном.</span>
+      <span class="card__foot label"><i>Собственный проект</i><i>2025</i></span>
+    </a>
+
+    <!-- рубашки: только глубина, кликать нечего -->
+    <span class="card card--back" aria-hidden="true"
+      style="--x:38%;--y:80%;--ry:-38deg;--rx:10deg;--rz:7deg;--s:.6;--d:.2;--dur:27s;--b:#b9c48d"></span>
+    <span class="card card--back" aria-hidden="true"
+      style="--x:60%;--y:6%;--ry:44deg;--rx:-9deg;--rz:-6deg;--s:.52;--d:.16;--dur:30s;--b:#8a7fa8"></span>
+    <span class="card card--back" aria-hidden="true"
+      style="--x:92%;--y:66%;--ry:-20deg;--rx:4deg;--rz:8deg;--s:.64;--d:.24;--dur:24s;--b:#c4844a"></span>
+  </div>
+</section>
+
+<!-- скрытый список для поиска и доступности -->
+<section class="works sr" id="worksList">
+  <div class="works__head">
+    <span class="label">Избранные работы</span>
+    <span class="label">(06)</span>
+  </div>
+
+  <div class="works__list" id="list">
+    <a class="work" href="https://testrepo-one-livid.vercel.app/" target="_blank" rel="noopener"
+       data-img="linear-gradient(145deg,#2b2e33,#0e0f11)">
+      <span class="work__idx label">01</span>
+      <span class="work__name">VANTA</span>
+      <span class="work__cat label">Автомобильный дом</span>
+      <span class="work__tag label">Собственный проект</span>
+      <span class="work__yr label">2026</span>
+    </a>
+    <a class="work" href="https://nor-delta.vercel.app/" target="_blank" rel="noopener"
+       data-img="linear-gradient(145deg,#3a3732,#111)">
+      <span class="work__idx label">02</span>
+      <span class="work__name">NØR</span>
+      <span class="work__cat label">Мода · AW26</span>
+      <span class="work__tag label">Собственный проект</span>
+      <span class="work__yr label">2026</span>
+    </a>
+    <a class="work is-client" href="https://elena-rieltor-neon.vercel.app/" target="_blank" rel="noopener"
+       data-img="linear-gradient(145deg,#4a4036,#17120d)">
+      <span class="work__idx label">03</span>
+      <span class="work__name">Елена</span>
+      <span class="work__cat label">Недвижимость, Москва</span>
+      <span class="work__tag label">Клиент · 7 сделок</span>
+      <span class="work__yr label">2025</span>
+    </a>
+    <a class="work" href="https://trohamburger.vercel.app/" target="_blank" rel="noopener"
+       data-img="linear-gradient(145deg,#4d3a1c,#140e07)">
+      <span class="work__idx label">04</span>
+      <span class="work__name">TROHAMBURGER</span>
+      <span class="work__cat label">Крафтовые бургеры</span>
+      <span class="work__tag label">Собственный проект</span>
+      <span class="work__yr label">2025</span>
+    </a>
+    <a class="work" href="https://ai-revenue-recovery-amber.vercel.app/" target="_blank" rel="noopener"
+       data-img="linear-gradient(145deg,#2a2d3a,#0c0d12)">
+      <span class="work__idx label">05</span>
+      <span class="work__name">PlusLead</span>
+      <span class="work__cat label">Возврат клиентов · SaaS</span>
+      <span class="work__tag label">Собственный проект</span>
+      <span class="work__yr label">2025</span>
+    </a>
+    <a class="work" href="https://beautytroh.vercel.app/" target="_blank" rel="noopener"
+       data-img="linear-gradient(145deg,#3d2630,#120b0f)">
+      <span class="work__idx label">06</span>
+      <span class="work__name">BEAUTYTROH</span>
+      <span class="work__cat label">Студия красоты</span>
+      <span class="work__tag label">Собственный проект</span>
+      <span class="work__yr label">2025</span>
+    </a>
+  </div>
+
+  <div class="peek" id="peek"></div>
+</section>
+
+<!-- ─────────── МАНИФЕСТ ─────────── -->
+<section class="say about" id="about">
+  <div class="about__sheet" id="aboutSheet">
+
+    <div class="about__head">
+      <span class="label">О себе</span>
+      <span class="label">Доступен для проектов</span>
+    </div>
+
+    <p class="say__p about__lead" data-split>
+      Я не крашу чужие макеты. Беру задачу целиком — смысл, текст,
+      типографика, движение — и довожу до состояния, когда сайт
+      <em>невозможно спутать</em> с шаблоном.
+    </p>
+
+    <div class="about__cols">
+      <p class="about__txt">
+        Работаю один, и это не недостаток, а способ держать качество.
+        Между замыслом и готовым сайтом нет передачи из рук в руки, где
+        половина задуманного теряется по дороге.
+      </p>
+      <p class="about__txt">
+        Поэтому у меня не бывает «дизайнер нарисовал, а сверстать не вышло».
+        Я отвечаю за результат целиком — от первой строки текста до
+        последней анимации.
+      </p>
+    </div>
+
+    <div class="about__facts">
+      <div class="fact"><b>6</b><span>проектов вживую</span></div>
+      <div class="fact"><b>7</b><span>сделок у первого клиента за месяц</span></div>
+      <div class="fact"><b>1</b><span>человек в команде</span></div>
+      <div class="fact"><b>24ч</b><span>обычный срок ответа</span></div>
+    </div>
+
+    <div class="about__links">
+      <a class="about__cta" href="https://t.me/ceoofmembers" target="_blank" rel="noopener">
+        <span>Написать в Телеграм</span><i>→</i>
+      </a>
+      <a class="about__alt label" href="https://instagram.com/trohantrohan" target="_blank" rel="noopener">
+        Инстаграм · trohantrohan
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<footer class="foot" id="contact">
+  <a class="foot__big" href="https://t.me/ceoofmembers" target="_blank" rel="noopener">Написать</a>
+  <div class="foot__row">
+    <span class="label">© 2026 TROHA</span>
+    <span class="label">Прототип направления · не финал</span>
+  </div>
+</footer>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+<script src="ripple.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

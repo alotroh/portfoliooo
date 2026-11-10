@@ -1,0 +1,16 @@
+# системное
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# редакторы
+.vscode/
+.idea/
+
+# зависимости и сборка
+node_modules/
+dist/
+.vercel/
+
+# логи
+*.log
