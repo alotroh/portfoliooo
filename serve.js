@@ -13,7 +13,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = __dirname;
+/* корень тоже берём настоящий: сравнивать короткое имя с длинным
+   бессмысленно, они не совпадут ни одним символом */
+const ROOT = fs.realpathSync(__dirname);
 const PORT = Number(process.env.PORT) || 4500;
 /* слушаем только свою машину. Нужен доступ с телефона по Wi-Fi —
    запусти так: HOST=0.0.0.0 node serve.js */
@@ -46,22 +48,33 @@ http.createServer((req, res) => {
     return;
   }
 
-  const file = path.join(ROOT, url === '/' ? 'index.html' : url);
+  const target = path.join(ROOT, url === '/' ? 'index.html' : url);
 
-  /* за пределы папки не выпускаем */
-  if (!path.resolve(file).startsWith(path.resolve(ROOT))) {
-    res.writeHead(403).end('forbidden');
-    return;
-  }
+  /* Проверяем не адрес, а то, куда он на самом деле ведёт.
+     Разбирать адрес самому бесполезно: Windows считает разделителем
+     и обратный слэш, поэтому «/\.git/config» проходит любую проверку
+     по сегментам и всё равно попадает в .git. А ещё у каждой папки
+     есть короткое имя в стиле GIT~1, ведущее туда же.
+     realpath снимает и то, и другое: он возвращает настоящий путь
+     с настоящими именами, и уже его мы сверяем с корнем. */
+  fs.realpath(target, (rErr, file) => {
+    if (rErr) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('404');
+      return;
+    }
 
-  /* Ничего, что начинается с точки. Здесь лежит .git со всей историей
-     репозитория, и без этой проверки её можно было бы вычитать по
-     адресу /.git/config, как обычный файл. */
-  if (url.split('/').some(seg => seg.startsWith('.'))) {
-    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' }).end('403');
-    return;
-  }
+    const rel = path.relative(ROOT, file);
+    const outside = rel.startsWith('..') || path.isAbsolute(rel);
+    const hidden = rel.split(/[\\/]/).some(seg => seg.startsWith('.'));
+    if (outside || hidden) {
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' }).end('403');
+      return;
+    }
 
+    serve(file);
+  });
+
+  function serve(file) {
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('404');
@@ -103,6 +116,7 @@ http.createServer((req, res) => {
       .on('error', () => res.destroy())
       .pipe(res);
   });
+  }
 }).listen(PORT, HOST, () => {
   console.log(`TROHA — портфолио: http://localhost:${PORT}`);
 });
