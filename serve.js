@@ -15,6 +15,9 @@ const path = require('path');
 
 const ROOT = __dirname;
 const PORT = Number(process.env.PORT) || 4500;
+/* слушаем только свою машину. Нужен доступ с телефона по Wi-Fi —
+   запусти так: HOST=0.0.0.0 node serve.js */
+const HOST = process.env.HOST || '127.0.0.1';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -33,12 +36,29 @@ const TYPES = {
 };
 
 http.createServer((req, res) => {
-  const url = decodeURIComponent(req.url.split('?')[0]);
+  /* decodeURIComponent падает на кривом проценте вроде /%, а
+     исключение в обработчике роняет весь процесс — одним запросом */
+  let url;
+  try {
+    url = decodeURIComponent(req.url.split('?')[0]);
+  } catch {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' }).end('400');
+    return;
+  }
+
   const file = path.join(ROOT, url === '/' ? 'index.html' : url);
 
   /* за пределы папки не выпускаем */
   if (!path.resolve(file).startsWith(path.resolve(ROOT))) {
     res.writeHead(403).end('forbidden');
+    return;
+  }
+
+  /* Ничего, что начинается с точки. Здесь лежит .git со всей историей
+     репозитория, и без этой проверки её можно было бы вычитать по
+     адресу /.git/config, как обычный файл. */
+  if (url.split('/').some(seg => seg.startsWith('.'))) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' }).end('403');
     return;
   }
 
@@ -67,7 +87,9 @@ http.createServer((req, res) => {
         'Accept-Ranges': 'bytes',
         'Cache-Control': 'no-store'
       });
-      fs.createReadStream(file, { start, end }).pipe(res);
+      fs.createReadStream(file, { start, end })
+        .on('error', () => res.destroy())
+        .pipe(res);
       return;
     }
 
@@ -77,8 +99,10 @@ http.createServer((req, res) => {
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'no-store'
     });
-    fs.createReadStream(file).pipe(res);
+    fs.createReadStream(file)
+      .on('error', () => res.destroy())
+      .pipe(res);
   });
-}).listen(PORT, () => {
+}).listen(PORT, HOST, () => {
   console.log(`TROHA — портфолио: http://localhost:${PORT}`);
 });
