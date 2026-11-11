@@ -13,9 +13,12 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-/* корень тоже берём настоящий: сравнивать короткое имя с длинным
-   бессмысленно, они не совпадут ни одним символом */
-const ROOT = fs.realpathSync(__dirname);
+/* Корень тоже берём настоящий: сравнивать короткое имя с длинным
+   бессмысленно, они не совпадут ни одним символом.
+   Именно .native, а не обычный realpath: первый спрашивает систему и
+   получает каноническое длинное имя, второй разворачивает только
+   символические ссылки и короткое имя оставляет как есть. */
+const ROOT = fs.realpathSync.native(__dirname);
 const PORT = Number(process.env.PORT) || 4500;
 /* слушаем только свою машину. Нужен доступ с телефона по Wi-Fi —
    запусти так: HOST=0.0.0.0 node serve.js */
@@ -48,6 +51,17 @@ http.createServer((req, res) => {
     return;
   }
 
+  /* Windows умеет открывать один и тот же файл несколькими именами:
+     короткое имя (GIT~1), поток внутри файла (index.html:secret),
+     имя с точкой или пробелом на конце — система их молча отбросит.
+     Ни одному настоящему файлу этого сайта такое не нужно. */
+  const bad = /[~:]/.test(url) ||
+              url.split(/[\\/]/).some(seg => /[. ]$/.test(seg));
+  if (bad) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' }).end('403');
+    return;
+  }
+
   const target = path.join(ROOT, url === '/' ? 'index.html' : url);
 
   /* Проверяем не адрес, а то, куда он на самом деле ведёт.
@@ -57,7 +71,7 @@ http.createServer((req, res) => {
      есть короткое имя в стиле GIT~1, ведущее туда же.
      realpath снимает и то, и другое: он возвращает настоящий путь
      с настоящими именами, и уже его мы сверяем с корнем. */
-  fs.realpath(target, (rErr, file) => {
+  fs.realpath.native(target, (rErr, file) => {
     if (rErr) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('404');
       return;
