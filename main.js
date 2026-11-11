@@ -3,7 +3,7 @@ gsap.registerPlugin(ScrollTrigger);
 /* Звук подключается отдельным файлом. Если он не загрузился —
    на месте каждого вызова остаётся пустышка, и анимации работают
    как ни в чём не бывало. */
-const SND = window.SND || { whoosh() {}, click() {}, drop() {} };
+const SND = window.SND || { click() {} };
 
 /* ═══════ 1. ИНЕРЦИОННЫЙ СКРОЛЛ ═══════ */
 /* если CDN не отдал Lenis — сайт работает на нативном скролле, а не падает */
@@ -122,7 +122,6 @@ function splitWords(root) {
       { yPercent: 150, opacity: 1, duration: .22, ease: 'none', immediateRender: false }, .42)
       .to(roll, { opacity: 0, duration: .05, ease: 'none' }, .64);
   }
-  tl.call(() => SND.whoosh(1.15), null, .44);
 })();
 
 /* ═══════ 4. ПОЯВЛЕНИЕ СЕКЦИИ РАБОТ ═══════ */
@@ -334,20 +333,18 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     }, '-=.25')
 
     /* 3. ноль: вспышка, имя остаётся целиком.
-          Маску на этом месте снимаем совсем: оставлять сектор в 360°
-          незачем, а любая ошибка округления там стоила бы отрезанной
+          Срез на этом месте снимаем совсем: держать его на 100%
+          незачем, а любая ошибка округления стоила бы отрезанной
           буквы в самом конце входа. */
     .add(() => {
       blink(.78, .09);
-      word.style.webkitMaskImage = 'none';
-      word.style.maskImage = 'none';
+      word.style.clipPath = 'none';
     })
     .to(count, { autoAlpha: 0, duration: .35, ease: 'power2.out' }, '<')
     .to(sub, { autoAlpha: 1, yPercent: 0, duration: .8, ease: 'expo.out' }, '-=.3')
     .addLabel('slide', '+=.45')
 
     /* 4. ракорд уезжает влево, герой приходит справа */
-    .call(() => SND.whoosh(1.25), null, 'slide')
     .to(leader,    { xPercent: -100, duration: 1.1, ease: 'expo.inOut' }, 'slide')
     .to(heroParts, { xPercent: 0,    duration: 1.1, ease: 'expo.inOut' }, 'slide')
     /* 5. и сам герой собирается */
@@ -502,7 +499,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 
   /* ── АКТ 2 ── плёнка гаснет, все работы вылетают карточками */
   tl.addLabel('fly', '+=.3');
-  tl.call(() => SND.whoosh(.85), null, 'fly');
   tl.to(film, { autoAlpha: 0, ease: 'power2.inOut', duration: .7 }, 'fly');
   tl.to(film$, { speed: 900, duration: .5, ease: 'power2.in' }, 'fly');
   tl.to(shots, {
@@ -530,7 +526,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
      сверху своим отрицательным отступом — пустого экрана между
      ними больше нет и резкой склейки тоже. */
   tl.addLabel('dive');
-  tl.call(() => SND.whoosh(1.3), null, 'dive');
   tl.to([notch, head, foot], { autoAlpha: 0, ease: 'power2.in', duration: .45 }, 'dive');
   tl.to(phone, { borderWidth: 0, boxShadow: 'none', duration: .45 }, 'dive');
   tl.to(screen, { scale: 20, borderRadius: 0, ease: 'power2.in', duration: 1.6 }, 'dive+=.1');

@@ -1,15 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
    ЗВУК
 
-   Три файла из media/sfx и ничего больше:
-     whoosh — переходы между экранами,
-     click  — карточка под курсором,
-     water  — капли на первом экране, где рябь под мышью.
+   Один звук: клик на карточке под курсором. Переходы и капли
+   на первом экране убраны — сайт звучит только там, где человек
+   что-то делает руками.
 
-   Файлы проигрываются через Web Audio, а не через <audio>:
-   один и тот же звук может звучать внахлёст (на быстрых
-   переходах это слышно), громкость считается на лету, а
-   задержки между нажатием и звуком нет.
+   Файл проигрывается через Web Audio, а не через <audio>:
+   он может звучать внахлёст, когда ведёшь по карточкам быстро,
+   громкость считается на лету, а задержки между движением и
+   звуком нет.
 
    Браузер не даёт запустить звук до первого действия человека,
    поэтому всё просыпается на первом касании колеса, клике или
@@ -20,12 +19,10 @@ window.SND = (function () {
   const KEY = 'troha-sound';
   let on = localStorage.getItem(KEY) !== 'off';
 
-  /* src — путь, vol — своя громкость, gap — минимум между
-     повторами, чтобы один звук не сыпался очередью */
+  /* src — путь, vol — громкость, gap — минимум между повторами,
+     чтобы при быстром движении по полю звук не сыпался очередью */
   const LIB = {
-    whoosh: { src: 'media/sfx/whoosh.mp3', vol: .5,  gap: 380 },
-    click:  { src: 'media/sfx/click.mp3',  vol: .34, gap: 70  },
-    water:  { src: 'media/sfx/water.mp3',  vol: .42, gap: 230 }
+    click: { src: 'media/sfx/click.mp3', vol: .34, gap: 70 }
   };
 
   let ctx = null, master = null;
@@ -90,25 +87,12 @@ window.SND = (function () {
     src.start();
   }
 
-  /* ─── что чем звучит ───
-     Высоту тона слегка разводим: один и тот же файл, повторённый
-     подряд без изменений, выдаёт себя с головой. */
-
-  /* переход между экранами; strength — насколько он крупный */
-  function whoosh(strength) {
-    const k = strength || 1;
-    play('whoosh', 1.12 - k * .12, Math.min(1.25, .78 + k * .22));
-  }
-
-  /* карточка под курсором: тон чуть разный у соседних карточек */
+  /* Карточка под курсором. Высоту тона разводим по шести ступеням:
+     один и тот же файл, повторённый подряд без изменений, выдаёт
+     себя с головой, когда ведёшь по полю. */
   const STEP = [1, 1.06, 1.12, .96, 1.03, 1.09];
   function click(i) {
     play('click', STEP[(i || 0) % STEP.length], 1);
-  }
-
-  /* капля на первом экране */
-  function drop() {
-    play('water', .92 + Math.random() * .22, 1);
   }
 
   /* ─── включение / выключение ─── */
@@ -143,21 +127,6 @@ window.SND = (function () {
   document.addEventListener('DOMContentLoaded', () => {
     btn = document.getElementById('snd');
     if (btn) { btn.addEventListener('click', toggle); paint(); }
-
-    /* вода под курсором — только на первом экране, где и сама рябь */
-    const hero = document.getElementById('hero');
-    if (hero) {
-      let lx = -1, ly = -1;
-      hero.addEventListener('pointermove', e => {
-        const r = hero.getBoundingClientRect();
-        if (!r.width || !r.height) return;
-        const nx = (e.clientX - r.left) / r.width;
-        const ny = (e.clientY - r.top) / r.height;
-        if (lx >= 0 && Math.hypot(nx - lx, ny - ly) < .06) return;
-        lx = nx; ly = ny;
-        drop();
-      }, { passive: true });
-    }
   });
 
   /* первое действие человека — рождение контекста */
@@ -176,5 +145,5 @@ window.SND = (function () {
     } else apply(.35);
   });
 
-  return { whoosh, click, drop, toggle, isOn: () => on };
+  return { click, toggle, isOn: () => on };
 })();

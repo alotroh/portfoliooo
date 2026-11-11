@@ -220,8 +220,11 @@ a{color:inherit;text-decoration:none}
   pointer-events:none;color:rgb(236 234 228 / .93);
 }
 
-/* сцена: каждая карточка получает свою перспективу, как на grail-app */
-.field__stage{position:absolute;left:0;right:0;top:4%;bottom:12%;z-index:2;
+/* Сцена: каждая карточка получает свою перспективу, как на grail-app.
+   Верх отрезан на 12% — раньше поле начиналось под самой шапкой, и
+   верхние карточки накрывали собой подписи «Избранные работы» и
+   «нажми, чтобы открыть». */
+.field__stage{position:absolute;left:0;right:0;top:12%;bottom:8%;z-index:2;
   perspective:1400px;perspective-origin:50% 45%}
 
 .field__bg{position:absolute;inset:0;overflow:hidden;z-index:0;
@@ -577,11 +580,14 @@ a{color:inherit;text-decoration:none}
   font-family:var(--f-display);font-weight:800;
   font-size:clamp(2.4rem,11.5vw,9.5rem);line-height:.85;letter-spacing:-.05em;
   color:#f6f4ee;
-  filter:drop-shadow(0 0 42px rgb(250 232 206 / .28));
-  -webkit-mask-image:conic-gradient(from -90deg, #000 0deg,
-     #000 calc(var(--sw,0) * 1deg), transparent calc(var(--sw,0) * 1deg));
-  mask-image:conic-gradient(from -90deg, #000 0deg,
-     #000 calc(var(--sw,0) * 1deg), transparent calc(var(--sw,0) * 1deg));
+  text-shadow:0 0 42px rgb(250 232 206 / .28);
+
+  /* Проявляем срезом, а не маской. От маски браузер рисует слово в
+     отдельный слой, и прямоугольник этого слоя проступает на фоне —
+     это и был тот самый «прозрачный прямоугольник» вокруг TROHA.
+     Срез идёт тем же счётчиком, что и стрелка: 0° — ничего,
+     360° — имя целиком. */
+  clip-path:inset(0 calc(100% - var(--sw,0) * 100% / 360) 0 0);
 }
 .leader__sub{position:relative;z-index:2;color:rgb(236 234 228 / .6)}
 
