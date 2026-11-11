@@ -393,7 +393,10 @@ a{color:inherit;text-decoration:none}
    ПЛЁНКА → ТЕЛЕФОН
    Та же схема, что у героя: высокая оболочка, липкий кадр внутри.
    ═══════════════════════════════════════════════════════════ */
-.reel{position:relative;height:620svh;background:#060607}
+/* высота подобрана так, чтобы на одну работу приходилось примерно
+   столько же прокрутки, сколько и раньше: таймлайн стал длиннее на
+   хвост с небом, и секция выросла вместе с ним */
+.reel{position:relative;height:700svh;background:#060607}
 .reel__stage{
   position:sticky;top:0;height:100svh;overflow:hidden;
   display:flex;flex-direction:column;
@@ -453,8 +456,9 @@ a{color:inherit;text-decoration:none}
 .reel__count b{font-family:var(--f-display);font-weight:500;
   font-size:clamp(1.2rem,2.8vw,2.1rem);letter-spacing:-.03em;color:var(--amber)}
 
-/* середина: полоса работ и телефон лежат слоями */
-.reel__mid{flex:1;min-height:0;position:relative;z-index:2}
+/* середина: полоса работ и телефон лежат слоями.
+   perspective нужна пролёту сквозь корпус в конце секции */
+.reel__mid{flex:1;min-height:0;position:relative;z-index:2;perspective:1500px}
 
 /* ── ПОЛОСА РАБОТ ──
    Все работы лежат в один ряд и только смещаются вбок. Соседние
@@ -491,7 +495,9 @@ a{color:inherit;text-decoration:none}
 .phone__screen{position:absolute;inset:5px;display:block;overflow:hidden;
   background:#141416;border-radius:13.4% / 6.4%;
   transform-origin:50% 50%;will-change:transform}
-.phone__screen video{width:100%;height:100%;object-fit:cover;display:block}
+.phone__screen video{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block}
+.phone__sky{opacity:0}
 .phone__notch{position:absolute;top:6px;left:50%;transform:translateX(-50%);
   width:26%;height:8px;border-radius:0 0 7px 7px;background:#0a0a0b;z-index:2}
 
@@ -592,6 +598,37 @@ a{color:inherit;text-decoration:none}
   margin-top:clamp(2rem,5vw,4rem);
 }
 .about .about__lead em{font-style:normal;color:var(--ink-acc)}
+
+/* ── ТРИ ОТЛИЧИЯ ──
+   Самое продающее место страницы, поэтому набрано крупнее обычного
+   текста и разделено линейками: такой список прочитают и те, кто
+   сплошной абзац пропускает. */
+.about__diff{margin-top:clamp(2.6rem,6vw,5rem)}
+.about__diffhead{
+  font-family:var(--f-display);font-weight:400;
+  font-size:clamp(1.1rem,2vw,1.6rem);line-height:1.1;letter-spacing:-.03em;
+  color:var(--ink);margin-bottom:clamp(1rem,2.4vw,1.8rem);
+}
+.diff{
+  display:grid;grid-template-columns:clamp(2.6rem,5vw,4.4rem) minmax(0,1fr);
+  gap:clamp(.8rem,2.4vw,2.4rem);align-items:start;
+  padding:clamp(1.1rem,2.6vw,2rem) 0;border-top:1px solid var(--ink-line);
+}
+.diff:last-child{border-bottom:1px solid var(--ink-line)}
+.diff b{
+  font-family:var(--f-display);font-weight:400;
+  font-size:clamp(1rem,1.7vw,1.4rem);line-height:1;letter-spacing:-.02em;
+  color:var(--ink-acc);
+}
+.diff h4{
+  font-family:var(--f-display);font-weight:400;
+  font-size:clamp(1.05rem,2.1vw,1.7rem);line-height:1.18;letter-spacing:-.03em;
+  color:var(--ink);margin-bottom:.6rem;
+}
+.diff p{
+  font-size:clamp(.9rem,1.1vw,1.0625rem);line-height:1.55;
+  color:var(--ink-mute);max-width:54ch;
+}
 
 .about__cols{
   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));

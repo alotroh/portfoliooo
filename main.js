@@ -378,11 +378,19 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   const nameEl = document.getElementById('reelName');
   const catEl  = document.getElementById('reelCat');
   const vid    = document.getElementById('phoneVid');
+  const sky    = document.getElementById('phoneSky');
   const bgVid  = document.getElementById('reelVideo');
   if (!sec || !shots.length || typeof gsap === 'undefined') return;
 
   const N = shots.length;
   if (vid) vid.play().catch(() => {});
+
+  /* небо в экране: на телефоне второй ролик не качаем, там пролёт
+     просто уходит в цвет страницы */
+  if (sky) {
+    if (innerWidth <= 900) { sky.removeAttribute('src'); sky.load(); }
+    else sky.play().catch(() => {});
+  }
 
   /* ── фоновое видео ── */
   if (bgVid) {
@@ -496,19 +504,48 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   /* ── АКТ 3 ── пауза на телефоне */
   tl.to({}, { duration: .7 });
 
-  /* ── АКТ 4 ── ныряем внутрь экрана.
-     Корпус и подписи гаснут, экран разрастается на весь кадр.
-     Дальше его накрывает секция карточек, которая едет снизу
-     своим отрицательным отступом. */
-  tl.addLabel('dive');
-  tl.to([notch, head, foot], { autoAlpha: 0, ease: 'power2.in', duration: .45 }, 'dive');
-  tl.to(phone, { borderWidth: 0, boxShadow: 'none', duration: .45 }, 'dive');
-  tl.to(screen, { scale: 20, borderRadius: 0, ease: 'power2.in', duration: 1.6 }, 'dive+=.1');
+  /* ── АКТ 4 ── ПРОЛЁТ СКВОЗЬ ТЕЛЕФОН
 
-  /* Видео гасим по ходу увеличения: иначе последние кадры нырка —
-     это логотип во всю ширину, а он при таком масштабе разваливается. */
-  if (vid) tl.to(vid, { autoAlpha: 0, ease: 'power2.in', duration: .8 }, 'dive+=.55');
-  tl.to(screen, { backgroundColor: '#0b0b0c', ease: 'power2.in', duration: .8 }, 'dive+=.55');
+     Раньше здесь просто раздувался экран: ролик 720 пикселей шириной
+     растягивался в двадцать раз и превращался в кашу, а по краям
+     оставались полосы. Увеличенная картинка — это не переход.
+
+     Теперь камера идёт сквозь корпус, как в дверной проём. Сначала
+     экран перестаёт быть роликом и становится небом — тем же, что
+     лежит фоном у карточек. Потом на зрителя едет весь телефон
+     целиком, с наклоном и уходом вбок, корпус проходит мимо краёв
+     кадра, и остаётся только небо, в которое мы влетели. Растянуть
+     нечего: к моменту, когда что-то крупно, на экране уже небо, и
+     оно ровно то же, что в следующей секции. */
+  tl.addLabel('dive');
+
+  /* 1. служебное уходит — остаётся только аппарат */
+  tl.to([notch, head, foot], { autoAlpha: 0, ease: 'power2.in', duration: .4 }, 'dive');
+
+  /* 2. экран меняет содержимое: ролик → небо */
+  if (vid) tl.to(vid, { autoAlpha: 0, ease: 'none', duration: .55 }, 'dive+=.15');
+  if (sky) tl.to(sky, { autoAlpha: 1, ease: 'none', duration: .55 }, 'dive+=.15');
+  tl.to(screen, { backgroundColor: '#0b0b0c', ease: 'none', duration: .55 }, 'dive+=.15');
+
+  /* 3. телефон идёт на зрителя целиком и уходит за края кадра.
+        Рамку и корпус намеренно НЕ гасим: именно они, проезжая мимо
+        краёв, и читаются как проём, сквозь который мы проходим. Без
+        них на экране просто растёт светлый прямоугольник. */
+  tl.to(phone, {
+    scale: 9, rotation: -5, xPercent: -62, yPercent: -58,
+    ease: 'power2.in', duration: 1.75
+  }, 'dive+=.4');
+
+  /* 4. зал гаснет: мы уже не в нём */
+  tl.to('.reel__bg', { autoAlpha: 0, ease: 'power2.in', duration: .9 }, 'dive+=.95');
+
+  /* 5. хвост — небо во весь кадр.
+     Без него пролёт приходился ровно на те же проценты прокрутки, на
+     которых снизу уже наезжает секция карточек, и корпус уходил за
+     край кадра у неё за спиной: самого интересного не было видно.
+     Теперь полёт успевает закончиться, и только потом поверх неба
+     поднимаются карточки. */
+  tl.to({}, { duration: 2.5 });
 })();
 
 
@@ -547,6 +584,15 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   gsap.from(leadWords, {
     yPercent: 115, duration: .95, ease: 'expo.out', stagger: .035,
     scrollTrigger: { trigger: '.about__lead', start: 'top 86%' }
+  });
+
+  gsap.from('.about__diffhead', {
+    y: 22, autoAlpha: 0, duration: .9, ease: 'expo.out',
+    scrollTrigger: { trigger: '.about__diff', start: 'top 86%' }
+  });
+  gsap.from('.diff', {
+    y: 32, autoAlpha: 0, duration: 1, ease: 'expo.out', stagger: .12,
+    scrollTrigger: { trigger: '.about__diff', start: 'top 82%' }
   });
 
   gsap.from('.about__txt', {
