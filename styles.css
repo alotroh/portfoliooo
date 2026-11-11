@@ -4,7 +4,14 @@
   --fg:#eceae4;
   --mute:rgb(236 234 228 / .52);
   --faint:rgb(236 234 228 / .14);
+
+  /* палитра: шалфей — основной акцент, рядом тёплая лампа проектора
+     и два холодных оттенка. Ими подкрашены свет, свечение карточек
+     и служебные детали, чтобы сайт не читался как серый. */
   --accent:#b9c48d;
+  --amber:#e0a35c;
+  --violet:#8a7fa8;
+  --rose:#c47fa0;
 
   --f-display:'Unbounded',sans-serif;
   --f-body:'Golos Text',sans-serif;
@@ -15,6 +22,12 @@
   --e-reveal:cubic-bezier(.16,1,.3,1);
   --e-inout:cubic-bezier(.65,.05,0,1);
   --e-ui:cubic-bezier(.4,0,.2,1);
+
+  /* бумага финального разворота — объявлена глобально, её видит и подвал */
+  --paper:#efe9df; --ink:#17140f;
+  --ink-mute:rgb(23 20 15 / .56);
+  --ink-line:rgb(23 20 15 / .16);
+  --ink-acc:#6c7742;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -23,13 +36,14 @@ body{
   background:var(--bg);color:var(--fg);
   font-family:var(--f-body);font-size:clamp(.9375rem,1.05vw,1.0625rem);
   font-weight:500;line-height:1.45;letter-spacing:-.01em;
-  overflow-x:hidden;
 }
+/* clip, а не hidden: hidden делает страницу прокручиваемым контейнером
+   и убивает position:sticky, на котором держатся герой и плёнка */
+html,body{overflow-x:clip}
+
 a{color:inherit;text-decoration:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 
-/* микро-подписи набраны основной гарнитурой, а не моноширинной:
-   моно в них читалось как «вывод из редактора кода» */
 .label{
   font-family:var(--f-body);font-size:clamp(.625rem,.75vw,.6875rem);
   font-weight:500;text-transform:uppercase;letter-spacing:.16em;
@@ -40,20 +54,10 @@ a{color:inherit;text-decoration:none}
 .line{display:block;overflow:hidden}
 .line__in{display:block;will-change:transform}
 
-/* ═══════════ ПРЕЛОАДЕР ═══════════ */
-.pre{
-  position:fixed;inset:0;z-index:120;background:var(--bg);
-  display:flex;flex-direction:column;justify-content:flex-end;
-  padding:var(--pad);
-}
-.pre__inner{display:flex;flex-direction:column;gap:clamp(1rem,3vw,2.5rem)}
-.pre__row{display:flex;justify-content:space-between;align-items:baseline}
-.pre__num{
-  font-family:var(--f-display);font-weight:300;
-  font-size:clamp(5rem,22vw,20rem);line-height:.8;letter-spacing:-.05em;
-}
-.pre__bar{height:1px;background:var(--faint);margin-top:clamp(1rem,2.5vw,2rem)}
-.pre__bar i{display:block;height:100%;width:0;background:var(--fg)}
+/* пословный reveal: запас снизу спасает хвосты у «у», «р», «д» */
+.w{display:inline-block;overflow:hidden;vertical-align:bottom;
+   padding-bottom:.1em;margin-bottom:-.1em}
+.wi{display:inline-block;will-change:transform}
 
 /* ═══════════ КУРСОР ═══════════ */
 .cursor{
@@ -82,56 +86,70 @@ a{color:inherit;text-decoration:none}
   letter-spacing:.12em;color:var(--fg)}
 .nav__brand sup{font-size:.5em;vertical-align:super}
 .nav__mid{display:flex;gap:1.6rem;justify-self:center}
-.nav__mid a,.nav__cta{color:var(--fg);position:relative}
-.nav__mid a::after,.nav__cta::after{
+.nav__mid a{color:var(--fg);position:relative}
+.nav__mid a::after{
   content:'';position:absolute;left:0;bottom:-3px;width:100%;height:1px;
   background:currentColor;transform:scaleX(0);transform-origin:right;
   transition:transform .4s var(--e-inout);
 }
-.nav__mid a:hover::after,.nav__cta:hover::after{transform:scaleX(1);transform-origin:left}
-.nav__right{justify-self:end;display:flex;align-items:center;gap:clamp(.9rem,2vw,1.6rem)}
-.nav__cta{display:inline-flex;align-items:center;gap:.5rem}
-.nav__soc{color:var(--fg);position:relative}
-@media (max-width:520px){ .nav__soc{display:none} }
-.nav__cta i{width:5px;height:5px;border-radius:50%;background:var(--accent);
-  display:block;animation:pulse 2.4s infinite var(--e-ui)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.nav__mid a:hover::after{transform:scaleX(1);transform-origin:left}
+
+/* соцсети значками: подписи «ТЕЛЕГРАМ · ИНСТАГРАМ» забирали на себя
+   слишком много внимания для служебной ссылки */
+.nav__right{justify-self:end;display:flex;align-items:center;gap:.55rem}
+.nav__ico{
+  display:grid;place-items:center;width:32px;height:32px;color:var(--fg);
+  border-radius:50%;opacity:.82;
+  transition:opacity .35s var(--e-ui),transform .45s var(--e-inout);
+}
+.nav__ico svg{width:19px;height:19px;display:block;fill:currentColor}
+.nav__ico:hover{opacity:1;transform:translateY(-2px) scale(1.06)}
 
 /* ═══════════ ГЕРОЙ ═══════════ */
-.hero{position:relative;height:100svh;min-height:600px;overflow:hidden}
+/* Закрепление делает CSS: высокая оболочка + липкий кадр внутри.
+   ScrollTrigger ничего не измеряет и не подменяет, поэтому
+   содержимое больше не может уехать вбок на один кадр. */
+/* 200svh = экран стоит, пока идёт пролёт, и ровно столько же уезжает
+   вверх, пока его выталкивает плёнка. Раньше здесь было 172svh, и
+   между концом анимации и приходом плёнки оставался чёрный экран. */
+.hero{position:relative;height:200svh}
+.hero__inner{
+  position:sticky;top:0;height:100svh;min-height:600px;overflow:hidden;
+}
 
 .hero__media{position:absolute;inset:0;overflow:hidden;
   will-change:transform,opacity;transform-origin:50% 50%}
-/* видео вытягиваем по яркости: вуаль гасит фон, а в дырах букв
-   остаётся яркий кадр — так выбивка читается как окно, а не как серый текст */
 .hero__media video{position:absolute;inset:0;width:100%;height:100%;
   object-fit:cover;display:block;
-  filter:brightness(2.15) contrast(1.12) saturate(.9)}
+  filter:brightness(2.15) contrast(1.12) saturate(.95)}
 
 /* полотно ряби: рисует то же видео, но с искажением от курсора */
 #ripple{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
 .has-ripple .hero__media video{opacity:0}
 
-/* лёгкая подсветка поверх видео, чтобы выбивка читалась */
-.veil{position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(78% 52% at 50% 46%, rgb(255 252 244 / .10), transparent 70%)}
+/* подсветка поверх видео: тёплая лампа слева, холодный свет справа —
+   выбивка читается, и первый экран перестаёт быть серым */
+.veil{position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:
+    radial-gradient(64% 46% at 28% 38%, rgb(224 163 92 / .16), transparent 70%),
+    radial-gradient(58% 44% at 76% 64%, rgb(138 127 168 / .14), transparent 72%),
+    radial-gradient(78% 52% at 50% 46%, rgb(255 252 244 / .07), transparent 70%)}
 
 /* запасной фон, если видео не проигралось */
 .fakevid{display:none}
 .no-video .fakevid{display:block;position:absolute;inset:-12%;background:#0a0a0c;
-  /* широкая световая полоса ровно там, где лежат буквы */
   background-image:linear-gradient(180deg,
     transparent 18%, rgb(214 206 184 / .13) 46%, rgb(214 206 184 / .07) 62%, transparent 86%);
 }
 .fakevid i{position:absolute;border-radius:50%;filter:blur(58px);display:block}
 .fakevid i:nth-child(1){
   width:72%;height:92%;left:38%;top:-18%;
-  background:radial-gradient(circle,rgb(232 224 200 / .86) 0%,rgb(198 186 158 / .34) 38%,transparent 68%);
+  background:radial-gradient(circle,rgb(232 224 200 / .86) 0%,rgb(224 163 92 / .34) 38%,transparent 68%);
   animation:drift1 26s infinite alternate var(--e-ui);
 }
 .fakevid i:nth-child(2){
   width:58%;height:72%;left:-6%;top:22%;
-  background:radial-gradient(circle,rgb(140 158 184 / .52) 0%,rgb(110 126 150 / .18) 42%,transparent 70%);
+  background:radial-gradient(circle,rgb(138 127 168 / .52) 0%,rgb(110 126 150 / .18) 42%,transparent 70%);
   animation:drift2 34s infinite alternate var(--e-ui);
 }
 .fakevid i:nth-child(3){
@@ -144,24 +162,20 @@ a{color:inherit;text-decoration:none}
 @keyframes drift3{to{transform:translate3d(-10%,-16%,0) scale(1.32)}}
 
 .grain{
-  position:absolute;inset:0;pointer-events:none;opacity:.5;
+  position:absolute;inset:0;pointer-events:none;opacity:.5;z-index:2;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
 }
 
 /* выбивка: тёмная вуаль с дырами в форме букв */
-.hero__knock{position:absolute;inset:0;width:100%;height:100%;display:block;
+.hero__knock{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:3;
   will-change:transform,opacity;transform-origin:50% 48%}
-/* origin считаем от самой надписи, а не от координат viewBox —
-   иначе при смене viewBox на телефоне масштаб уезжает в сторону */
 #knockText{transform-box:fill-box;transform-origin:50% 50%}
 .hero__knock rect[mask]{fill:var(--bg);fill-opacity:.88}
 
-/* пословный reveal */
-.w{display:inline-block;overflow:hidden;vertical-align:bottom}
-.wi{display:inline-block;will-change:transform}
-
-.hero__bottom{position:absolute;left:0;right:0;bottom:0;padding:0 var(--pad) var(--pad)}
-.hero__line{height:1px;background:var(--faint);margin-bottom:1.15rem;
+.hero__bottom{position:absolute;left:0;right:0;bottom:0;z-index:4;
+  padding:0 var(--pad) var(--pad)}
+.hero__line{height:1px;margin-bottom:1.15rem;
+  background:linear-gradient(90deg,var(--accent),rgb(224 163 92 / .5) 42%,var(--faint));
   transform:scaleX(0);transform-origin:left}
 .hero__meta{display:grid;grid-template-columns:1fr 1.5fr 1fr .55fr;
   gap:clamp(1rem,3vw,3rem);align-items:start}
@@ -169,69 +183,85 @@ a{color:inherit;text-decoration:none}
 .hero__meta .col.wide .line__in{
   font-size:clamp(.9rem,1.15vw,1.0625rem);line-height:1.45;max-width:34ch;color:var(--fg)}
 
+/* ═══════════ КАДРОВАЯ ПОЛОСА НА СТЫКЕ ═══════════
+   Пробегает сверху вниз один раз, когда герой передаёт экран плёнке.
+   Высота ограничена, поэтому кадр никогда не закрыт целиком. */
+.roll{
+  position:fixed;left:0;right:0;top:0;height:24vh;z-index:95;
+  pointer-events:none;opacity:0;transform:translateY(-150%);
+  background:
+    linear-gradient(180deg,transparent 0%,rgb(4 4 5 / .94) 34%,
+                    rgb(4 4 5 / .94) 64%, transparent 100%);
+}
+.roll::after{content:'';position:absolute;left:0;right:0;top:34%;height:1px;
+  background:linear-gradient(90deg,transparent,rgb(236 234 228 / .5),transparent)}
+
 /* ═══════════ ПОЛЕ ЛЕТАЮЩИХ КАРТОЧЕК ═══════════ */
-.field{position:relative;
-  padding:calc(var(--section) * .55) var(--pad) 0;
-  margin-top:-12vh;                /* подтягиваем облака ближе к концу пролёта */
-  min-height:100svh;display:flex;flex-direction:column}
+/* секция наезжает на хвост плёнки: её отрицательный отступ съедает
+   последний экран ленты, и пустоты между телефоном и карточками нет */
+.field{position:relative;z-index:5;background:var(--bg);
+  margin-top:-68svh;height:250svh}
+/* кадр с карточками тоже липкий: иначе при высокой секции карточки
+   расползаются далеко за экран, а при низкой их успевает накрыть
+   финальный лист через полтора оборота колеса */
+.field__hold{
+  position:sticky;top:0;height:100svh;
+  padding:calc(var(--section) * .42) var(--pad) 0;
+  display:flex;flex-direction:column}
 .field__head{display:flex;justify-content:space-between;
   padding-bottom:1.1rem;border-bottom:1px solid var(--faint);position:relative;z-index:3}
+/* фоновое слово: плотное начертание, чтобы карточки лежали на нём,
+   а не висели над тонкой надписью */
 .field__title{
-  font-family:var(--f-display);font-weight:300;
-  font-size:clamp(2.4rem,8.4vw,8rem);line-height:.88;letter-spacing:-.04em;
+  font-family:var(--f-display);font-weight:700;
+  font-size:clamp(2.4rem,8.6vw,8.2rem);line-height:.86;letter-spacing:-.045em;
   text-transform:uppercase;text-align:center;
-  margin-top:clamp(2.5rem,7vw,6rem);position:relative;z-index:1;
-  pointer-events:none;
+  margin-top:clamp(2rem,5.4vw,4.4rem);position:relative;z-index:1;
+  pointer-events:none;color:rgb(236 234 228 / .93);
 }
 
 /* сцена: каждая карточка получает свою перспективу, как на grail-app */
-/* сцену отодвигаем от шапки, иначе верхние карточки режутся краем секции */
-.field__stage{position:absolute;left:0;right:0;top:6%;bottom:9%;z-index:2;
+.field__stage{position:absolute;left:0;right:0;top:4%;bottom:12%;z-index:2;
   perspective:1400px;perspective-origin:50% 45%}
 
-/* фоновое видео секции: сильно притушено, чтобы карточки оставались главными */
 .field__bg{position:absolute;inset:0;overflow:hidden;z-index:0;
   opacity:0;transition:opacity 1.4s var(--e-ui)}
 .has-field-video .field__bg{opacity:1}
-/* кадр приближаем и сдвигаем вверх: облачная часть должна накрыть
-   всю секцию, иначе нижняя треть уходит в чёрное */
 .field__bg video{width:100%;height:100%;object-fit:cover;display:block;
   transform:scale(1.38) translateY(-11%);transform-origin:center;
-  filter:brightness(.52) saturate(.8) contrast(1.04)}
+  filter:brightness(.54) saturate(.9) contrast(1.04)}
+/* верх притушен слабее, чем раньше: секция выезжает из-под плёнки, и
+   облака должны быть видны сразу, иначе первым приходит чёрный прямоугольник */
 .field__bg::after{content:'';position:absolute;inset:0;
   background:
-    linear-gradient(180deg,var(--bg) 0%,rgb(11 11 12 / .40) 16%,
+    linear-gradient(180deg,rgb(11 11 12 / .86) 0%,rgb(11 11 12 / .44) 9%,
                     rgb(11 11 12 / .40) 84%,var(--bg) 100%)}
 
 /* медленный живой свет в глубине секции */
-.field::before{
+.field__hold::before{
   content:'';position:absolute;inset:-8%;pointer-events:none;z-index:0;
   background:
-    radial-gradient(40% 36% at 22% 30%, rgb(185 196 141 / .10), transparent 70%),
-    radial-gradient(38% 42% at 78% 62%, rgb(138 127 168 / .12), transparent 72%),
-    radial-gradient(32% 28% at 56% 88%, rgb(196 132 74 / .08), transparent 70%);
+    radial-gradient(40% 36% at 22% 30%, rgb(185 196 141 / .13), transparent 70%),
+    radial-gradient(38% 42% at 78% 62%, rgb(138 127 168 / .15), transparent 72%),
+    radial-gradient(32% 28% at 56% 88%, rgb(224 163 92 / .11), transparent 70%);
   animation:fieldGlow 26s ease-in-out infinite alternate;
 }
-@keyframes fieldGlow{
-  to{transform:translate3d(2.5%,-3.5%,0) scale(1.14)}
-}
+@keyframes fieldGlow{ to{transform:translate3d(2.5%,-3.5%,0) scale(1.14)} }
 
 .card{
   --open:0;--in:.55;--fy:0;--fx:0;--px:0;--py:0;--wob:0;--sz:0;
   opacity:0;                       /* влёт включает JS */
   position:absolute;left:var(--x);top:var(--y);
-  width:clamp(130px,12.8vw,196px);   /* высоту задаёт содержимое */
+  width:clamp(130px,12.8vw,196px);
   display:flex;flex-direction:column;gap:.45rem;
   padding:clamp(.6rem,.85vw,.95rem);
   background:var(--fg);color:#14140f;border-radius:5px;
   box-shadow:
     0 18px 44px rgb(0 0 0 / .55),
     0 2px 6px rgb(0 0 0 / .4),
-    0 0 40px -14px var(--glow,#8e9ec4);          /* дежурное свечение */
+    0 0 40px -14px var(--glow,#8e9ec4);
   transition:box-shadow .65s var(--e-ui), width .8s var(--e-inout);
   will-change:transform;
-  /* всё движение идёт через переменные — так дрейф, параллакс и ховер
-     складываются в один transform и не затирают друг друга */
   transform:
     translate(-50%,-50%)
     translate3d(calc((var(--px,0) + var(--fx,0)) * 1px),
@@ -240,8 +270,6 @@ a{color:inherit;text-decoration:none}
     rotateX(calc(var(--rx) * (1 - var(--open))))
     rotateY(calc(var(--ry) * (1 - var(--open))))
     rotateZ(calc((var(--rz) + var(--wob,0) * 1deg) * (1 - var(--open))))
-    /* прибавку масштаба держим маленькой: на ховере карточка и так
-       расширяется по ширине, двойное увеличение смотрится грубо */
     scale(calc(var(--s) * (1 + var(--open) * .06) * var(--in,1)));
 }
 .card__idx{color:rgb(20 20 15 / .45)}
@@ -249,7 +277,6 @@ a{color:inherit;text-decoration:none}
   position:relative;overflow:hidden;background:#1a1a1c}
 .card__shot img{width:100%;height:100%;object-fit:cover;object-position:top center;
   display:block}
-/* блик пробегает по превью — короткий, с большой паузой, чтобы не мельтешил */
 .card__shot::after{
   content:'';position:absolute;inset:0;
   background:linear-gradient(112deg,transparent 36%,rgb(255 255 255 / .22) 50%,transparent 64%);
@@ -262,7 +289,6 @@ a{color:inherit;text-decoration:none}
   font-size:clamp(.72rem,1.02vw,1rem);line-height:1;letter-spacing:-.035em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card__cat{color:rgb(20 20 15 / .5);font-size:.54rem;line-height:1.3}
-/* описание раскрывается только на ховере */
 .card__desc{
   max-height:0;opacity:0;overflow:hidden;
   font-size:.62rem;line-height:1.5;color:rgb(20 20 15 / .66);
@@ -277,7 +303,7 @@ a{color:inherit;text-decoration:none}
 .card.is-client .card__foot i:first-child{color:#5d6b2f;font-weight:500}
 
 /* рубашки — узор, как у колоды */
-.card--back{background:var(--b);aspect-ratio:3/4.2;   /* внутри пусто, высоту задаём сами */
+.card--back{background:var(--b);aspect-ratio:3/4.2;
   box-shadow:0 14px 36px rgb(0 0 0 / .5), 0 0 40px -16px var(--glow,#8e9ec4)}
 .card--back::after{content:'';position:absolute;inset:7%;border-radius:2px;
   background-image:
@@ -301,144 +327,12 @@ a{color:inherit;text-decoration:none}
 .card:nth-child(1){--glow:#7d93b8}
 .card:nth-child(2){--glow:#b3a894}
 .card:nth-child(3){--glow:#c9a86a}
-.card:nth-child(4){--glow:#d99a3c}
+.card:nth-child(4){--glow:#e0a35c}
 .card:nth-child(5){--glow:#8e9ec4}
 .card:nth-child(6){--glow:#c47fa0}
 .card:nth-child(7){--glow:#b9c48d}
 .card:nth-child(8){--glow:#8a7fa8}
-.card:nth-child(9){--glow:#c4844a}
-
-/* ═══════════ РАБОТЫ (текстовый дубль) ═══════════ */
-.works{position:relative;padding:var(--section) var(--pad)}
-.works__head{display:flex;justify-content:space-between;
-  padding-bottom:1.1rem;border-bottom:1px solid var(--faint)}
-
-.work{
-  display:grid;grid-template-columns:3.5rem minmax(0,15rem) 1fr auto 4rem;
-  align-items:center;gap:clamp(.8rem,2vw,2rem);
-  padding:clamp(1.1rem,2.3vw,2rem) 0;border-bottom:1px solid var(--faint);
-  transition:opacity .45s var(--e-ui),padding-left .55s var(--e-inout);
-}
-.work__name{
-  font-family:var(--f-display);font-weight:400;
-  font-size:clamp(1.5rem,3.1vw,2.9rem);line-height:.95;letter-spacing:-.035em;
-  white-space:nowrap;
-}
-.work__cat{color:var(--mute)}
-.work__tag{color:var(--mute);white-space:nowrap}
-.work.is-client .work__tag{color:var(--accent)}
-.work__yr{text-align:right}
-/* гасим соседей только когда наведена сама строка, а не промежуток между ними */
-.works__list:has(.work:hover) .work{opacity:.3}
-.works__list .work:hover{opacity:1;padding-left:clamp(.5rem,1.6vw,1.6rem)}
-
-.peek{
-  position:fixed;top:0;left:0;z-index:20;pointer-events:none;
-  width:min(26vw,340px);aspect-ratio:4/3;border-radius:2px;
-  margin:-11vw 0 0 -13vw;opacity:0;transform:scale(.92);
-  transition:opacity .45s var(--e-ui),transform .55s var(--e-reveal);
-  background-size:cover;background-position:center;
-}
-.peek.is-on{opacity:1;transform:scale(1)}
-
-/* ═══════════ МАНИФЕСТ ═══════════ */
-.say{padding:var(--section) var(--pad);border-top:1px solid var(--faint)}
-.say__p{
-  font-family:var(--f-display);font-weight:300;
-  font-size:clamp(1.65rem,4.6vw,4.1rem);line-height:1.02;letter-spacing:-.035em;
-  max-width:19ch;
-}
-.say__p em{font-style:normal;color:var(--accent)}
-.say__meta{display:flex;justify-content:space-between;margin-top:clamp(3rem,7vw,6rem);
-  padding-top:1.1rem;border-top:1px solid var(--faint)}
-
-/* ═══════════ ПОДВАЛ ═══════════ */
-.foot{padding:var(--section) var(--pad) var(--pad);border-top:1px solid var(--faint)}
-.foot__big{
-  display:block;font-family:var(--f-display);font-weight:700;
-  font-size:clamp(3.5rem,17vw,15rem);line-height:.82;letter-spacing:-.05em;
-  margin-left:-.04em;
-}
-.foot__row{display:flex;justify-content:space-between;
-  margin-top:clamp(2.5rem,6vw,5rem);padding-top:1.1rem;border-top:1px solid var(--faint)}
-
-/* ═══════════ АДАПТИВ ═══════════ */
-@media (max-width:900px){
-  .nav__mid{display:none}
-  .hero__meta{grid-template-columns:1fr 1fr;row-gap:1.4rem}
-  .hero__meta .col.wide{grid-column:1/-1;order:-1}
-  .work{grid-template-columns:2.2rem 1fr auto;row-gap:.3rem}
-  .work__cat,.work__yr{display:none}
-  .peek{display:none}
-
-  /* на телефоне 3D-поле не читается: раскладываем карточки обычной сеткой */
-  .field{min-height:0;padding-bottom:var(--section)}
-  .field__bg{display:none}         /* 2,4 МБ фонового видео мобильному ни к чему */
-  .field__stage{position:static;perspective:none;
-    display:grid;grid-template-columns:repeat(2,1fr);gap:.9rem;
-    margin-top:clamp(2rem,9vw,3.5rem)}
-  .card{position:static;width:auto;opacity:1;
-    transform:none!important;animation:none!important}
-  .card--back{display:none}
-  .field__stage:has(.card:hover) .card{filter:none}
-  .field__title{text-align:left}
-}
-
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
-}
-
-
-/* ═══════════════════════════════════════════════════════════
-   ДЕМО: интро краской, плёнка → телефон → конфетти, прогресс-полоса.
-   Подключается только в demo.html. Удаляется вместе с demo.js
-   и демо-блоками разметки — основной сайт об этом не знает.
-   ═══════════════════════════════════════════════════════════ */
-
-
-/* ───────────── ВХОД: РАКОРД ───────────── */
-.leader{
-  position:fixed;inset:0;z-index:200;overflow:hidden;background:#070708;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(.6rem,1.6vh,1.2rem);will-change:transform;
-}
-.leader__marks{position:absolute;width:min(78vmin,560px);height:min(78vmin,560px);
-  left:50%;top:50%;transform:translate(-50%,-50%);display:block}
-
-/* бегущая стрелка прицела */
-.leader__sweep{
-  position:absolute;left:50%;top:50%;
-  width:min(72vmin,520px);height:min(72vmin,520px);border-radius:50%;
-  transform:translate(-50%,-50%) rotate(calc(var(--sw,0) * 1deg));
-  background:conic-gradient(from -90deg,
-    rgb(236 234 228 / .26) 0deg, rgb(236 234 228 / .05) 26deg, transparent 54deg);
-}
-
-/* имя проявляется тем же сектором, что и бежит стрелка */
-.leader__word{
-  position:relative;z-index:2;
-  font-family:var(--f-display);font-weight:800;
-  font-size:clamp(2.4rem,11.5vw,9.5rem);line-height:.85;letter-spacing:-.05em;
-  color:#eceae4;
-  -webkit-mask-image:conic-gradient(from -90deg, #000 0deg,
-     #000 calc(var(--sw,0) * 1deg), transparent calc(var(--sw,0) * 1deg));
-  mask-image:conic-gradient(from -90deg, #000 0deg,
-     #000 calc(var(--sw,0) * 1deg), transparent calc(var(--sw,0) * 1deg));
-}
-.leader__sub{position:relative;z-index:2;color:rgb(236 234 228 / .6)}
-
-.leader__corner{position:absolute;z-index:2;color:rgb(236 234 228 / .42)}
-.leader__corner--tl{left:var(--pad);top:var(--pad)}
-.leader__corner--br{right:var(--pad);bottom:var(--pad)}
-
-.leader__grain{
-  position:absolute;inset:0;z-index:3;pointer-events:none;
-  opacity:.5;mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
-}
-
-@media (prefers-reduced-motion:reduce){ .leader{display:none} }
-
+.card:nth-child(9){--glow:#e0a35c}
 
 /* ═══════════ ПРОГРЕСС-ПОЛОСА ═══════════ */
 .prog{
@@ -458,7 +352,8 @@ a{color:inherit;text-decoration:none}
 .prog__track.is-drag{cursor:grabbing}
 .prog__fill{
   position:absolute;left:0;height:2px;width:0;border-radius:2px;
-  background:var(--accent);pointer-events:none;
+  background:linear-gradient(90deg,var(--violet),var(--accent) 52%,var(--amber));
+  pointer-events:none;
 }
 .prog__knob{
   position:absolute;left:0;width:11px;height:11px;border-radius:50%;
@@ -470,59 +365,248 @@ a{color:inherit;text-decoration:none}
 .prog__pct{min-width:3.4em;text-align:right;color:var(--mute)}
 @media (max-width:900px){ .prog{width:min(78vw,340px)} }
 
+/* ═══════════ КНОПКА ЗВУКА ═══════════
+   difference, как у шапки: одна кнопка читается и на чёрном,
+   и на бумаге в конце страницы. */
+/* z-index выше ракорда: иначе первые секунды кнопка закрыта заставкой,
+   и выключить звук можно только после того, как он уже прозвучал */
+.snd{
+  position:fixed;right:var(--pad);bottom:clamp(.9rem,2.4vh,1.6rem);z-index:210;
+  display:flex;align-items:center;gap:.55rem;
+  background:none;border:0;padding:.4rem;cursor:pointer;
+  color:var(--fg);mix-blend-mode:difference;font:inherit;
+}
+.snd__bars{display:flex;align-items:flex-end;gap:2px;height:14px}
+.snd__bars i{display:block;width:2px;height:3px;border-radius:1px;
+  background:currentColor;transition:height .3s var(--e-ui)}
+.snd.is-on .snd__bars i{animation:eq .9s ease-in-out infinite alternate}
+.snd.is-on .snd__bars i:nth-child(2){animation-duration:.63s}
+.snd.is-on .snd__bars i:nth-child(3){animation-duration:1.14s}
+.snd.is-on .snd__bars i:nth-child(4){animation-duration:.78s}
+@keyframes eq{ from{height:3px} to{height:14px} }
+.snd__txt{color:currentColor;transition:opacity .3s var(--e-ui)}
+.snd:not(.is-on) .snd__txt{opacity:.5}
+.snd:hover .snd__txt{opacity:1}
+@media (max-width:620px){ .snd__txt{display:none} }
 
-/* ═══════════ ПЛЁНКА → ТЕЛЕФОН → КОНФЕТТИ ═══════════ */
-.reel{position:relative;background:var(--bg)}
+/* ═══════════════════════════════════════════════════════════
+   ПЛЁНКА → ТЕЛЕФОН
+   Та же схема, что у героя: высокая оболочка, липкий кадр внутри.
+   ═══════════════════════════════════════════════════════════ */
+.reel{position:relative;height:620svh;background:#060607}
+.reel__stage{
+  position:sticky;top:0;height:100svh;overflow:hidden;
+  display:flex;flex-direction:column;
+  padding:calc(var(--pad) + 2.2rem) var(--pad) calc(var(--pad) + 2.4rem);
+  gap:clamp(.8rem,2.2vh,1.5rem);
+}
 
-/* ── свет проектора вместо фонового ролика ──
-   Ролик давал мутную кашу и весил 3 МБ. Здесь то же настроение
-   на чистом CSS: мягкий конус света на плёнку и пыль в нём. */
+/* ── свет проектора: лампа тёплая, поэтому секция не серая ── */
 .reel__bg{position:absolute;inset:0;overflow:hidden;z-index:0;background:#060607}
-
 .reel__beam{
   position:absolute;left:50%;top:-34%;width:152%;height:168%;
   transform:translateX(-50%);
   background:
-    radial-gradient(56% 40% at 50% 52%, rgb(236 234 228 / .09), transparent 72%),
+    radial-gradient(56% 40% at 50% 52%, rgb(240 200 142 / .13), transparent 72%),
     conic-gradient(from 199deg at 50% -8%,
-      transparent 0deg, rgb(236 234 228 / .055) 15deg,
-      rgb(236 234 228 / .014) 27deg, transparent 41deg);
+      transparent 0deg, rgb(240 200 142 / .085) 15deg,
+      rgb(224 163 92 / .03) 27deg, transparent 41deg),
+    radial-gradient(44% 34% at 16% 74%, rgb(138 127 168 / .10), transparent 74%);
   filter:blur(26px);
   animation:beam 19s ease-in-out infinite alternate;
 }
-@keyframes beam{ to{ transform:translateX(-52.5%) scale(1.07); opacity:.74 } }
+@keyframes beam{ to{ transform:translateX(-52.5%) scale(1.07); opacity:.78 } }
 
 .reel__dust{
   position:absolute;inset:-22%;
   background-image:
-    radial-gradient(1.5px 1.5px at 20% 30%, rgb(236 234 228 / .46), transparent 60%),
+    radial-gradient(1.5px 1.5px at 20% 30%, rgb(244 226 198 / .5), transparent 60%),
     radial-gradient(1.2px 1.2px at 70% 15%, rgb(236 234 228 / .34), transparent 60%),
-    radial-gradient(1.8px 1.8px at 45% 68%, rgb(236 234 228 / .3),  transparent 60%),
+    radial-gradient(1.8px 1.8px at 45% 68%, rgb(244 226 198 / .32), transparent 60%),
     radial-gradient(1px   1px   at 88% 56%, rgb(236 234 228 / .4),  transparent 60%),
-    radial-gradient(1.4px 1.4px at 10% 82%, rgb(236 234 228 / .26), transparent 60%),
+    radial-gradient(1.4px 1.4px at 10% 82%, rgb(244 226 198 / .28), transparent 60%),
     radial-gradient(1.1px 1.1px at 58% 90%, rgb(236 234 228 / .32), transparent 60%);
   background-size:360px 320px;
   animation:dust 38s linear infinite;
 }
 @keyframes dust{ to{ transform:translate3d(-360px,-320px,0) } }
 
-/* ═══════════════════════════════════════════════════════════
-   ФИНАЛ: светлый лист наезжает на карточки.
-   Весь сайт тёмный, поэтому бумага в конце — самый сильный
-   контраст из возможных и ясный сигнал «работа кончилась,
-   дальше человек».
-   ═══════════════════════════════════════════════════════════ */
-/* токены бумаги объявляем глобально: подвал не потомок .about
-   и иначе не видит эти переменные */
-:root{
-  --paper:#efe9df; --ink:#17140f;
-  --ink-mute:rgb(23 20 15 / .56);
-  --ink-line:rgb(23 20 15 / .16);
-  --ink-acc:#6c7742;
+.reel__bg::after{content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(130% 96% at 50% 50%, transparent 46%, rgb(6 6 7 / .9) 100%),
+    linear-gradient(180deg,var(--bg) 0%,transparent 16%,
+                           transparent 84%,var(--bg) 100%)}
+
+.reel__head{position:relative;z-index:2;
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-bottom:.9rem;border-bottom:1px solid var(--faint)}
+.reel__count b{font-family:var(--f-display);font-weight:500;
+  font-size:clamp(1.2rem,2.8vw,2.1rem);letter-spacing:-.03em;color:var(--amber)}
+
+/* середина: плёнка, кадры и телефон лежат слоями и НЕ режут друг друга */
+.reel__mid{flex:1;min-height:0;position:relative;z-index:2}
+
+/* ── плёнка: она действительно бежит ── */
+.reel__film{
+  position:absolute;left:0;right:0;top:9%;bottom:9%;
+  background:#070707;overflow:hidden;
+  border-top:1px solid rgb(236 234 228 / .13);
+  border-bottom:1px solid rgb(236 234 228 / .13);
+}
+.reel__film::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(125% 92% at 50% 50%, transparent 50%, rgb(0 0 0 / .66) 100%)}
+
+/* перфорация: шаг кадра ровно 46px, поэтому петля сходится без шва.
+   Положение двигает JS — скорость меняется на протяжке, а подмена
+   animation-duration заставляла бы анимацию прыгать. */
+.reel__perf{
+  position:absolute;left:0;right:0;pointer-events:none;
+  height:clamp(14px,2.3vh,21px);
+  background-repeat:repeat-x;background-size:46px 100%;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='26'%3E%3Crect width='46' height='26' fill='%23070707'/%3E%3Crect x='14' y='7' width='18' height='12' rx='3.5' fill='%23ddd9d0'/%3E%3C/svg%3E");
+}
+.reel__perf--top{top:0}
+.reel__perf--bot{bottom:0;transform:scaleY(-1)}
+
+/* служебные метки по краю плёнки — бегут с той же скоростью */
+.reel__edge{
+  position:absolute;left:0;right:0;height:6px;pointer-events:none;opacity:.42;
+  background-repeat:repeat-x;
+  background-image:repeating-linear-gradient(90deg,
+    rgb(236 234 228 / .5) 0 9px, transparent 9px 34px);
+  background-size:68px 100%;
+}
+.reel__edge--top{top:clamp(16px,2.6vh,24px)}
+.reel__edge--bot{bottom:clamp(16px,2.6vh,24px)}
+
+/* царапина: перескакивает с места на место, как на старой копии */
+.reel__scratch{
+  position:absolute;top:0;bottom:0;width:1px;left:31%;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgb(244 226 198 / .55),transparent);
+  animation:scratch 4.3s steps(1) infinite;
+}
+@keyframes scratch{
+  0%{left:31%;opacity:.34} 20%{left:63%;opacity:.18}
+  40%{left:17%;opacity:.4} 60%{left:78%;opacity:0}
+  80%{left:45%;opacity:.3} 100%{left:31%;opacity:.34}
 }
 
-/* лист во всю ширину — иначе между ним и подвалом остаётся
-   тёмная полоска, и бумага перестаёт читаться как цельная */
+.reel__grain{position:absolute;inset:0;pointer-events:none;
+  opacity:.38;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
+
+/* окно кадра: его слегка водит, как настоящую плёнку в проекторе */
+.reel__gatewrap{position:absolute;inset:0;z-index:2;will-change:transform}
+.reel__deck{position:absolute;inset:0}
+.shot{
+  position:absolute;left:50%;top:50%;margin:0;
+  height:66%;width:auto;aspect-ratio:16/10;
+  display:flex;flex-direction:column;
+  border:1px solid rgb(236 234 228 / .2);border-radius:7px;overflow:hidden;
+  background:#0f0f11;
+  box-shadow:0 28px 72px rgb(0 0 0 / .62), 0 0 64px -24px rgb(224 163 92 / .5);
+  filter:saturate(1.02) contrast(1.05);
+  will-change:transform,opacity;
+}
+.shot__bar{flex:none;height:20px;display:flex;align-items:center;gap:4px;
+  padding:0 8px;background:#17171a;border-bottom:1px solid rgb(236 234 228 / .1)}
+.shot__bar i{width:5px;height:5px;border-radius:50%;flex:none;
+  background:rgb(236 234 228 / .24);display:block}
+.shot img{display:block;width:100%;height:100%;object-fit:cover;
+  object-position:top center}
+
+/* вспышка затвора на склейке */
+.reel__flash{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;
+  background:radial-gradient(70% 60% at 50% 50%, rgb(255 246 230 / .9), rgb(255 246 230 / .25) 70%, transparent 100%);
+  mix-blend-mode:screen}
+
+/* телефон — отдельным слоем, его ничем не срезает.
+   Скругление эллиптическое, как на jjettas: 15%/7.1% и 13.4%/6.4% */
+.phone{
+  position:absolute;left:50%;top:50%;z-index:3;
+  height:86%;width:auto;aspect-ratio:.47;
+  background:#0a0a0b;border:1px solid rgb(236 234 228 / .3);
+  border-radius:15% / 7.1%;
+  box-shadow:0 30px 78px rgb(0 0 0 / .72), 0 0 60px -14px rgb(224 163 92 / .55);
+  opacity:0;will-change:transform,opacity;
+}
+.phone__screen{position:absolute;inset:5px;display:block;overflow:hidden;
+  background:#141416;border-radius:13.4% / 6.4%;
+  transform-origin:50% 50%;will-change:transform}
+.phone__screen video{width:100%;height:100%;object-fit:cover;display:block}
+.phone__notch{position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  width:26%;height:8px;border-radius:0 0 7px 7px;background:#0a0a0b;z-index:2}
+
+.reel__foot{flex:none;min-height:3.8em;position:relative;z-index:2}
+.reel__name{font-family:var(--f-display);font-weight:500;
+  font-size:clamp(1.3rem,3.2vw,2.4rem);line-height:1;letter-spacing:-.035em}
+.reel__cat{margin-top:.5rem}
+
+/* ═══════════ ВХОД: РАКОРД ═══════════ */
+.leader{
+  position:fixed;inset:0;z-index:200;overflow:hidden;background:#09090a;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(.6rem,1.6vh,1.2rem);will-change:transform;
+}
+/* лампа проектора: тёплое пятно, которое дышит — без неё экран мёртвый */
+.leader__lamp{
+  position:absolute;left:50%;top:50%;width:150vmin;height:150vmin;
+  transform:translate(-50%,-50%);pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 50%, rgb(250 232 206 / .22), transparent 54%),
+    radial-gradient(circle at 50% 50%, rgb(224 163 92 / .18), transparent 38%),
+    radial-gradient(circle at 50% 50%, rgb(140 158 184 / .10), transparent 66%);
+}
+
+.leader__marks{position:absolute;width:min(78vmin,560px);height:min(78vmin,560px);
+  left:50%;top:50%;transform:translate(-50%,-50%);display:block}
+
+/* бегущая стрелка прицела */
+.leader__sweep{
+  position:absolute;left:50%;top:50%;
+  width:min(72vmin,520px);height:min(72vmin,520px);border-radius:50%;
+  transform:translate(-50%,-50%) rotate(calc(var(--sw,0) * 1deg));
+  background:conic-gradient(from -90deg,
+    rgb(250 232 206 / .3) 0deg, rgb(224 163 92 / .08) 26deg, transparent 54deg);
+}
+
+
+/* имя проявляется тем же сектором, что и бежит стрелка */
+.leader__word{
+  position:relative;z-index:2;
+  font-family:var(--f-display);font-weight:800;
+  font-size:clamp(2.4rem,11.5vw,9.5rem);line-height:.85;letter-spacing:-.05em;
+  color:#f6f4ee;
+  filter:drop-shadow(0 0 42px rgb(250 232 206 / .28));
+  -webkit-mask-image:conic-gradient(from -90deg, #000 0deg,
+     #000 calc(var(--sw,0) * 1deg), transparent calc(var(--sw,0) * 1deg));
+  mask-image:conic-gradient(from -90deg, #000 0deg,
+     #000 calc(var(--sw,0) * 1deg), transparent calc(var(--sw,0) * 1deg));
+}
+.leader__sub{position:relative;z-index:2;color:rgb(236 234 228 / .6)}
+
+.leader__corner{position:absolute;z-index:2;color:rgb(236 234 228 / .42)}
+.leader__corner--tl{left:var(--pad);top:var(--pad)}
+.leader__corner--bl{left:var(--pad);bottom:var(--pad)}
+.leader__corner--br{right:var(--pad);bottom:var(--pad)}
+.leader__corner b{font-family:var(--f-display);font-weight:500;
+  color:var(--fg);font-size:1.3em;letter-spacing:0;display:inline-block;
+  min-width:1ch;text-align:center}
+
+.leader__grain{
+  position:absolute;inset:0;z-index:3;pointer-events:none;
+  opacity:.5;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+}
+/* вспышка на нуле отсчёта */
+.leader__flash{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;
+  background:#fbf7ef}
+
+@media (prefers-reduced-motion:reduce){ .leader{display:none} }
+
+/* ═══════════════════════════════════════════════════════════
+   ФИНАЛ: светлый лист наезжает на карточки
+   ═══════════════════════════════════════════════════════════ */
 .about{
   position:relative;z-index:6;
   margin-top:-16vh;padding:0;
@@ -542,8 +626,8 @@ a{color:inherit;text-decoration:none}
 
 .about .about__lead{
   font-family:var(--f-display);font-weight:300;
-  font-size:clamp(1.65rem,4.4vw,3.9rem);line-height:1.03;letter-spacing:-.035em;
-  max-width:19ch;color:var(--ink);
+  font-size:clamp(1.6rem,4.1vw,3.5rem);line-height:1.08;letter-spacing:-.035em;
+  max-width:21ch;color:var(--ink);
   margin-top:clamp(2rem,5vw,4rem);
 }
 .about .about__lead em{font-style:normal;color:var(--ink-acc)}
@@ -554,7 +638,7 @@ a{color:inherit;text-decoration:none}
   margin-top:clamp(2rem,5vw,4rem);
 }
 .about__txt{font-size:clamp(.95rem,1.15vw,1.0625rem);line-height:1.55;
-  color:var(--ink-mute);max-width:44ch}
+  color:var(--ink-mute);max-width:46ch}
 
 .about__facts{
   display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
@@ -564,6 +648,7 @@ a{color:inherit;text-decoration:none}
 }
 .fact b{display:block;font-family:var(--f-display);font-weight:400;
   font-size:clamp(1.8rem,4.6vw,3.4rem);line-height:1;letter-spacing:-.04em}
+.fact:nth-child(2) b{color:var(--ink-acc)}
 .fact span{display:block;margin-top:.5rem;
   font-family:var(--f-body);font-size:.625rem;text-transform:uppercase;
   letter-spacing:.13em;line-height:1.45;color:var(--ink-mute)}
@@ -585,106 +670,51 @@ a{color:inherit;text-decoration:none}
 .about__cta i{font-style:normal}
 
 /* подвал остаётся на той же бумаге — страница заканчивается светом */
-.foot{background:var(--paper);color:var(--ink);
+.foot{background:var(--paper);color:var(--ink);padding:var(--section) var(--pad) var(--pad);
   border-top:0;margin-top:0;position:relative;z-index:6}
-.foot__row{border-top:1px solid rgb(23 20 15 / .16)}
+.foot__big{
+  display:block;font-family:var(--f-display);font-weight:700;
+  font-size:clamp(3.5rem,17vw,15rem);line-height:.82;letter-spacing:-.05em;
+  margin-left:-.04em;
+}
+.foot__row{display:flex;justify-content:space-between;
+  margin-top:clamp(2.5rem,6vw,5rem);padding-top:1.1rem;
+  border-top:1px solid rgb(23 20 15 / .16)}
 .foot .label{color:rgb(23 20 15 / .5)}
 
+/* ═══════════ АДАПТИВ ═══════════ */
 @media (max-width:900px){
-  .about__cols,.about__facts{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
+  .nav__mid{display:none}
+  .hero__meta{grid-template-columns:1fr 1fr;row-gap:1.4rem}
+  .hero__meta .col.wide{grid-column:1/-1;order:-1}
 
-/* края уводим в цвет страницы, чтобы секция не торчала прямоугольником */
-.reel__bg::after{content:'';position:absolute;inset:0;
-  background:
-    radial-gradient(130% 96% at 50% 50%, transparent 46%, rgb(6 6 7 / .9) 100%),
-    linear-gradient(180deg,var(--bg) 0%,transparent 16%,
-                           transparent 84%,var(--bg) 100%)}
-
-.reel__stage{
-  position:relative;z-index:1;
-  height:100svh;display:flex;flex-direction:column;
-  padding:calc(var(--pad) + 2.2rem) var(--pad) calc(var(--pad) + 2.4rem);
-  gap:clamp(.8rem,2.2vh,1.5rem);
-}
-.reel__head{display:flex;justify-content:space-between;align-items:baseline;
-  padding-bottom:.9rem;border-bottom:1px solid var(--faint)}
-.reel__count b{font-family:var(--f-display);font-weight:500;
-  font-size:clamp(1.2rem,2.8vw,2.1rem);letter-spacing:-.03em;color:var(--fg)}
-
-/* середина: плёнка, кадры и телефон лежат слоями и НЕ режут друг друга */
-.reel__mid{flex:1;min-height:0;position:relative}
-
-/* плёнка — только оформление */
-.reel__film{
-  position:absolute;left:0;right:0;top:9%;bottom:9%;
-  background:#070707;overflow:hidden;
-  border-top:1px solid rgb(236 234 228 / .13);
-  border-bottom:1px solid rgb(236 234 228 / .13);
-}
-.reel__film::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(125% 92% at 50% 50%, transparent 50%, rgb(0 0 0 / .66) 100%)}
-.reel__perf{
-  position:absolute;left:0;right:0;pointer-events:none;
-  height:clamp(14px,2.3vh,21px);
-  background-repeat:repeat-x;background-size:auto 100%;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='26'%3E%3Crect width='46' height='26' fill='%23070707'/%3E%3Crect x='14' y='7' width='18' height='12' rx='3.5' fill='%23ddd9d0'/%3E%3C/svg%3E");
-}
-.reel__perf--top{top:0}
-.reel__perf--bot{bottom:0;transform:scaleY(-1)}
-.reel__grain{position:absolute;inset:0;pointer-events:none;
-  opacity:.38;mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
-
-/* кадры: все в одной точке, меняются на месте */
-.reel__deck{position:absolute;inset:0;z-index:2}
-.shot{
-  position:absolute;left:50%;top:50%;margin:0;
-  height:66%;width:auto;aspect-ratio:16/10;
-  display:flex;flex-direction:column;
-  border:1px solid rgb(236 234 228 / .2);border-radius:7px;overflow:hidden;
-  background:#0f0f11;
-  box-shadow:0 28px 72px rgb(0 0 0 / .62), 0 0 56px -26px rgb(185 196 141 / .4);
-  filter:saturate(.86) contrast(1.06);
-  will-change:transform,opacity;
-}
-.shot__bar{flex:none;height:20px;display:flex;align-items:center;gap:4px;
-  padding:0 8px;background:#17171a;border-bottom:1px solid rgb(236 234 228 / .1)}
-.shot__bar i{width:5px;height:5px;border-radius:50%;flex:none;
-  background:rgb(236 234 228 / .24);display:block}
-.shot img{display:block;width:100%;height:100%;object-fit:cover;
-  object-position:top center}
-
-/* телефон — отдельным слоем, его ничем не срезает.
-   Скругление эллиптическое, как на jjettas: 15%/7.1% и 13.4%/6.4% */
-.phone{
-  position:absolute;left:50%;top:50%;z-index:3;
-  height:86%;width:auto;aspect-ratio:.47;
-  background:#0a0a0b;border:1px solid rgb(236 234 228 / .3);
-  border-radius:15% / 7.1%;
-  box-shadow:0 30px 78px rgb(0 0 0 / .72), 0 0 54px -16px rgb(185 196 141 / .5);
-  opacity:0;will-change:transform,opacity;
-}
-.phone__screen{position:absolute;inset:5px;display:block;overflow:hidden;
-  background:#141416;border-radius:13.4% / 6.4%;
-  transform-origin:50% 50%;will-change:transform}
-.phone__screen video{width:100%;height:100%;object-fit:cover;display:block}
-.phone__notch{position:absolute;top:6px;left:50%;transform:translateX(-50%);
-  width:26%;height:8px;border-radius:0 0 7px 7px;background:#0a0a0b;z-index:2}
-
-.reel__foot{flex:none;min-height:3.8em}
-.reel__name{font-family:var(--f-display);font-weight:500;
-  font-size:clamp(1.3rem,3.2vw,2.4rem);line-height:1;letter-spacing:-.035em}
-.reel__cat{margin-top:.5rem}
-
-@media (max-width:900px){
-  /* на узком экране размер задаём по ширине, а не по высоте:
-     при height+aspect-ratio кадр получался шире вьюпорта */
   .reel__stage{padding-top:calc(var(--pad) + 3.2rem)}
   .reel__film{top:4%;bottom:4%}
   .reel__perf{height:11px}
+  .reel__edge--top{top:13px}
+  .reel__edge--bot{bottom:13px}
   .shot{width:88vw;height:auto}
   .phone{width:52vw;height:auto}
   .reel__foot{min-height:4.6em}
   .reel__count b{font-size:1.5rem}
+
+  /* на телефоне 3D-поле не читается: раскладываем карточки обычной сеткой */
+  .field{height:auto;margin-top:-28svh}
+  .field__hold{position:static;height:auto;padding-bottom:var(--section)}
+  .field__bg{display:none}
+  .field__stage{position:static;perspective:none;
+    display:grid;grid-template-columns:repeat(2,1fr);gap:.9rem;
+    margin-top:clamp(2rem,9vw,3.5rem)}
+  .card{position:static;width:auto;opacity:1;
+    transform:none!important;animation:none!important}
+  .card--back{display:none}
+  /* на тач-экране ховера нет — описание показываем сразу */
+  .card__desc{max-height:none;opacity:1}
+  .field__title{text-align:left}
+
+  .about__cols,.about__facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
