@@ -357,19 +357,19 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 
 
 /* ═══════════════════════════════════════════════════════════
-   ПЛЁНКА → ТЕЛЕФОН
-   Лента бежит сама по себе, кадр слегка водит в окне проектора,
-   а работы не растворяются, а сменяют друг друга протяжкой —
-   предыдущая уходит влево, следующая приходит справа со вспышкой.
+   РАБОТЫ В РЯД → ТЕЛЕФОН
+
+   Плёнки больше нет: фон держит видео, а работы лежат одной
+   полосой. Соседние видно всегда, поэтому ничего не появляется
+   из ниоткуда — прокрутка просто подводит следующую к центру.
+   Дальше всё как было: работы разлетаются, собираются в телефон
+   и экран раскрывается на весь кадр.
    ═══════════════════════════════════════════════════════════ */
 (function () {
   const sec    = document.getElementById('reel');
   const mid    = sec && sec.querySelector('.reel__mid');
-  const film   = document.getElementById('reelFilm');
-  const gate   = document.getElementById('reelGate');
   const head   = sec && sec.querySelector('.reel__head');
   const foot   = sec && sec.querySelector('.reel__foot');
-  const flash  = document.getElementById('reelFlash');
   const phone  = document.getElementById('reelPhone');
   const screen = sec && sec.querySelector('.phone__screen');
   const notch  = sec && sec.querySelector('.phone__notch');
@@ -378,55 +378,62 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   const nameEl = document.getElementById('reelName');
   const catEl  = document.getElementById('reelCat');
   const vid    = document.getElementById('phoneVid');
+  const bgVid  = document.getElementById('reelVideo');
   if (!sec || !shots.length || typeof gsap === 'undefined') return;
 
   const N = shots.length;
   if (vid) vid.play().catch(() => {});
 
-  /* ── 1. ЛЕНТА БЕЖИТ ──
-     Перфорацию и краевые метки двигаем сами, а не CSS-анимацией:
-     скорость нужно менять на лету, а смена animation-duration
-     заставляет анимацию прыгать. */
-  const runners = [
-    ...sec.querySelectorAll('.reel__perf'),
-    ...sec.querySelectorAll('.reel__edge')
-  ];
-  const steps = runners.map(el => el.classList.contains('reel__perf') ? 46 : 68);
-  const film$ = { speed: 74, pos: 0 };          // пикселей в секунду
-  let last = performance.now(), filmOn = true;
-
-  (function runFilm(now) {
-    requestAnimationFrame(runFilm);
-    const dt = Math.min(.05, (now - last) / 1000); last = now;
-    if (!filmOn) return;
-    film$.pos -= film$.speed * dt;
-    runners.forEach((el, i) => {
-      el.style.backgroundPositionX = (film$.pos % steps[i]) + 'px';
-    });
-  })(last);
-
-  ScrollTrigger.create({
-    trigger: sec, start: 'top bottom', end: 'bottom top',
-    onToggle: s => { filmOn = s.isActive; }        // не крутим ленту вне экрана
-  });
-
-  /* ── 2. КАДР ВОДИТ В ОКНЕ ──
-     Настоящая плёнка никогда не стоит ровно: даём ей дрожь на
-     доли пикселя со случайной амплитудой. */
-  if (gate) {
-    gsap.to(gate, {
-      duration: .2, repeat: -1, repeatRefresh: true, ease: 'none',
-      x: () => gsap.utils.random(-1.7, 1.7),
-      y: () => gsap.utils.random(-2.6, 2.6)
-    });
+  /* ── фоновое видео ── */
+  if (bgVid) {
+    if (innerWidth <= 900) {                 // на телефоне не качаем 2,4 МБ
+      bgVid.removeAttribute('src');
+      bgVid.load();
+    } else {
+      const show = () => document.body.classList.add('has-reel-video');
+      if (bgVid.readyState >= 2) show();
+      bgVid.addEventListener('loadeddata', show);
+      bgVid.addEventListener('error', () => {});   // нет файла — остаётся свет
+      bgVid.play().catch(() => {});
+    }
   }
 
-  /* стартовые позиции: все кадры в центре, виден первый */
-  gsap.set(shots, { xPercent: -50, yPercent: -50 });
-  gsap.set(shots.slice(1), { autoAlpha: 0 });
+  /* ── ПОЛОСА РАБОТ ──
+     pos.v — какая работа сейчас в центре, дробное значение между
+     ними и есть прокрутка. Всё остальное считается от расстояния
+     до центра: чем дальше работа, тем она меньше, бледнее и
+     размытее. Поэтому соседние читаются, но не спорят с главной. */
+  const pos = { v: 0 };
+  let step = 0;
+
+  function measure() {
+    step = (shots[0].offsetWidth || mid.offsetWidth * .46) * 1.16;
+  }
+
+  function layout() {
+    if (!step) measure();
+    shots.forEach((s, i) => {
+      const d = i - pos.v, ad = Math.abs(d);
+      gsap.set(s, {
+        x: d * step,
+        scale: Math.max(.6, 1 - ad * .15),
+        opacity: Math.max(0, 1 - ad * .36),
+        zIndex: 50 - Math.round(ad * 10),
+        filter: 'blur(' + Math.min(ad * 2.4, 7).toFixed(2) + 'px)'
+      });
+    });
+    setMeta(Math.max(0, Math.min(N - 1, Math.round(pos.v))));
+  }
+
+  /* Видимостью работ управляет только opacity — и в полосе, и в разлёте.
+     Пока разлёт пользовался autoAlpha, тот прятал работу ещё и через
+     visibility, а полоса об этом не знала и возвращала одну прозрачность:
+     при прокрутке назад к началу секции все работы оставались невидимыми
+     с правильной прозрачностью. */
+  gsap.set(shots, { xPercent: -50, yPercent: -50, visibility: 'visible' });
   gsap.set(phone, { xPercent: -50, yPercent: -50, scale: .45, autoAlpha: 0 });
 
-  /* ── подпись под кадром ── */
+  /* ── подпись под работой ── */
   let active = -1;
   function setMeta(i) {
     if (i === active || !shots[i]) return;
@@ -448,6 +455,10 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   catEl.textContent  = shots[0].dataset.cat;
   active = 0;
 
+  measure();
+  layout();
+  addEventListener('resize', () => { measure(); layout(); });
+
   /* разлёт по кругу — считаем от текущего размера сцены */
   function scatter(i) {
     const r = mid.getBoundingClientRect();
@@ -459,51 +470,16 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     scrollTrigger: {
       trigger: sec, start: 'top top', end: 'bottom bottom',
       scrub: 1, invalidateOnRefresh: true
-    },
-    onUpdate() {                       // активен тот кадр, что сейчас виднее
-      let best = 0, bo = -1;
-      shots.forEach((s, i) => {
-        const o = +gsap.getProperty(s, 'opacity');
-        if (o > bo) { bo = o; best = i; }
-      });
-      if (bo > .25) setMeta(best);
     }
   });
 
-  /* ── АКТ 1 ── протяжка: кадр уходит влево, следующий приходит справа */
-  for (let i = 1; i < N; i++) {
-    const L = 'sw' + i;
-    tl.addLabel(L);
+  /* ── АКТ 1 ── полоса едет, работы проходят через центр */
+  tl.to(pos, { v: N - 1, duration: 7.5, ease: 'none', onUpdate: layout }, 0);
 
-    /* лента дёргает: разгон на протяжке и торможение на кадре */
-    tl.to(film$, { speed: 460, duration: .3, ease: 'power2.in' }, L)
-      .to(film$, { speed: 74,  duration: .7, ease: 'power3.out' }, L + '+=.3');
-
-    tl.to(shots[i - 1], {
-      xPercent: -170, autoAlpha: 0, filter: 'blur(7px)',
-      duration: 1, ease: 'power2.inOut'
-    }, L);
-
-    tl.fromTo(shots[i],
-      { xPercent: 70, autoAlpha: 0, filter: 'blur(7px)' },
-      { xPercent: -50, autoAlpha: 1, filter: 'blur(0px)',
-        duration: 1, ease: 'power2.inOut', immediateRender: false }, L);
-
-    /* вспышка затвора ровно в момент склейки */
-    if (flash) tl.to(flash, {
-      opacity: .4, duration: .14, yoyo: true, repeat: 1, ease: 'none'
-    }, L + '+=.36');
-
-    tl.to({}, { duration: .55 });      // пауза, чтобы кадр прочитался
-  }
-
-  /* ── АКТ 2 ── плёнка гаснет, все работы вылетают карточками */
-  tl.addLabel('fly', '+=.3');
-  tl.to(film, { autoAlpha: 0, ease: 'power2.inOut', duration: .7 }, 'fly');
-  tl.to(film$, { speed: 900, duration: .5, ease: 'power2.in' }, 'fly');
+  /* ── АКТ 2 ── работы разлетаются по кругу */
+  tl.addLabel('fly', '+=.4');
   tl.to(shots, {
-    autoAlpha: 1, scale: .5, filter: 'blur(0px)',
-    xPercent: -50, yPercent: -50,
+    opacity: 1, scale: .5, filter: 'blur(0px)', zIndex: 20,
     x: i => scatter(i).x, y: i => scatter(i).y,
     rotation: i => (i % 2 ? 1 : -1) * (7 + i * 2.5),
     ease: 'power2.out', duration: 1.1, stagger: .05
@@ -512,7 +488,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   /* ── и собираются в телефон ── */
   tl.addLabel('gather', '+=.15');
   tl.to(shots, {
-    x: 0, y: 0, rotation: 0, scale: .13, autoAlpha: 0,
+    x: 0, y: 0, rotation: 0, scale: .13, opacity: 0,
     ease: 'power3.inOut', duration: 1.2, stagger: { each: .05, from: 'end' }
   }, 'gather');
   tl.to(phone, { scale: 1, autoAlpha: 1, ease: 'expo.out', duration: .95 }, 'gather+=.5');
@@ -522,9 +498,8 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 
   /* ── АКТ 4 ── ныряем внутрь экрана.
      Корпус и подписи гаснут, экран разрастается на весь кадр.
-     Дальше его просто накрывает секция карточек, которая едет
-     сверху своим отрицательным отступом — пустого экрана между
-     ними больше нет и резкой склейки тоже. */
+     Дальше его накрывает секция карточек, которая едет снизу
+     своим отрицательным отступом. */
   tl.addLabel('dive');
   tl.to([notch, head, foot], { autoAlpha: 0, ease: 'power2.in', duration: .45 }, 'dive');
   tl.to(phone, { borderWidth: 0, boxShadow: 'none', duration: .45 }, 'dive');
@@ -534,11 +509,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
      это логотип во всю ширину, а он при таком масштабе разваливается. */
   if (vid) tl.to(vid, { autoAlpha: 0, ease: 'power2.in', duration: .8 }, 'dive+=.55');
   tl.to(screen, { backgroundColor: '#0b0b0c', ease: 'power2.in', duration: .8 }, 'dive+=.55');
-
-  /* Хвоста после нырка нет намеренно: пустой чёрный экран между
-     телефоном и карточками брался именно отсюда. Таймлайн кончается
-     вместе с секцией, а последнюю треть нырка уже накрывает поле
-     карточек, которое едет снизу своим отрицательным отступом. */
 })();
 
 

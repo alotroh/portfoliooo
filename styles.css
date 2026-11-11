@@ -220,11 +220,8 @@ a{color:inherit;text-decoration:none}
   pointer-events:none;color:rgb(236 234 228 / .93);
 }
 
-/* Сцена: каждая карточка получает свою перспективу, как на grail-app.
-   Верх отрезан на 12% — раньше поле начиналось под самой шапкой, и
-   верхние карточки накрывали собой подписи «Избранные работы» и
-   «нажми, чтобы открыть». */
-.field__stage{position:absolute;left:0;right:0;top:12%;bottom:8%;z-index:2;
+/* сцена: каждая карточка получает свою перспективу, как на grail-app */
+.field__stage{position:absolute;left:0;right:0;top:6%;bottom:9%;z-index:2;
   perspective:1400px;perspective-origin:50% 45%}
 
 .field__bg{position:absolute;inset:0;overflow:hidden;z-index:0;
@@ -406,6 +403,16 @@ a{color:inherit;text-decoration:none}
 
 /* ── свет проектора: лампа тёплая, поэтому секция не серая ── */
 .reel__bg{position:absolute;inset:0;overflow:hidden;z-index:0;background:#060607}
+
+/* фоновое видео секции; нарисованный свет под ним остаётся
+   запасным вариантом и приглушается, когда ролик подхватился */
+.reel__bg video{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block;opacity:0;
+  transition:opacity 1.6s var(--e-ui);
+  filter:brightness(.62) saturate(.88) contrast(1.05)}
+.has-reel-video .reel__bg video{opacity:1}
+.has-reel-video .reel__beam{opacity:.3}
+.has-reel-video .reel__dust{opacity:.45}
 .reel__beam{
   position:absolute;left:50%;top:-34%;width:152%;height:168%;
   transform:translateX(-50%);
@@ -446,70 +453,23 @@ a{color:inherit;text-decoration:none}
 .reel__count b{font-family:var(--f-display);font-weight:500;
   font-size:clamp(1.2rem,2.8vw,2.1rem);letter-spacing:-.03em;color:var(--amber)}
 
-/* середина: плёнка, кадры и телефон лежат слоями и НЕ режут друг друга */
+/* середина: полоса работ и телефон лежат слоями */
 .reel__mid{flex:1;min-height:0;position:relative;z-index:2}
 
-/* ── плёнка: она действительно бежит ── */
-.reel__film{
-  position:absolute;left:0;right:0;top:9%;bottom:9%;
-  background:#070707;overflow:hidden;
-  border-top:1px solid rgb(236 234 228 / .13);
-  border-bottom:1px solid rgb(236 234 228 / .13);
-}
-.reel__film::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(125% 92% at 50% 50%, transparent 50%, rgb(0 0 0 / .66) 100%)}
-
-/* перфорация: шаг кадра ровно 46px, поэтому петля сходится без шва.
-   Положение двигает JS — скорость меняется на протяжке, а подмена
-   animation-duration заставляла бы анимацию прыгать. */
-.reel__perf{
-  position:absolute;left:0;right:0;pointer-events:none;
-  height:clamp(14px,2.3vh,21px);
-  background-repeat:repeat-x;background-size:46px 100%;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='26'%3E%3Crect width='46' height='26' fill='%23070707'/%3E%3Crect x='14' y='7' width='18' height='12' rx='3.5' fill='%23ddd9d0'/%3E%3C/svg%3E");
-}
-.reel__perf--top{top:0}
-.reel__perf--bot{bottom:0;transform:scaleY(-1)}
-
-/* служебные метки по краю плёнки — бегут с той же скоростью */
-.reel__edge{
-  position:absolute;left:0;right:0;height:6px;pointer-events:none;opacity:.42;
-  background-repeat:repeat-x;
-  background-image:repeating-linear-gradient(90deg,
-    rgb(236 234 228 / .5) 0 9px, transparent 9px 34px);
-  background-size:68px 100%;
-}
-.reel__edge--top{top:clamp(16px,2.6vh,24px)}
-.reel__edge--bot{bottom:clamp(16px,2.6vh,24px)}
-
-/* царапина: перескакивает с места на место, как на старой копии */
-.reel__scratch{
-  position:absolute;top:0;bottom:0;width:1px;left:31%;pointer-events:none;
-  background:linear-gradient(180deg,transparent,rgb(244 226 198 / .55),transparent);
-  animation:scratch 4.3s steps(1) infinite;
-}
-@keyframes scratch{
-  0%{left:31%;opacity:.34} 20%{left:63%;opacity:.18}
-  40%{left:17%;opacity:.4} 60%{left:78%;opacity:0}
-  80%{left:45%;opacity:.3} 100%{left:31%;opacity:.34}
-}
-
-.reel__grain{position:absolute;inset:0;pointer-events:none;
-  opacity:.38;mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
-
-/* окно кадра: его слегка водит, как настоящую плёнку в проекторе */
-.reel__gatewrap{position:absolute;inset:0;z-index:2;will-change:transform}
+/* ── ПОЛОСА РАБОТ ──
+   Все работы лежат в один ряд и только смещаются вбок. Соседние
+   видно всегда — поэтому следующая не появляется из ниоткуда, а
+   подъезжает. Масштаб, прозрачность и размытие считает JS по
+   расстоянию до центра. */
 .reel__deck{position:absolute;inset:0}
 .shot{
   position:absolute;left:50%;top:50%;margin:0;
-  height:66%;width:auto;aspect-ratio:16/10;
+  width:clamp(260px,46vw,720px);height:auto;aspect-ratio:16/10;
   display:flex;flex-direction:column;
-  border:1px solid rgb(236 234 228 / .2);border-radius:7px;overflow:hidden;
+  border:1px solid rgb(236 234 228 / .22);border-radius:9px;overflow:hidden;
   background:#0f0f11;
-  box-shadow:0 28px 72px rgb(0 0 0 / .62), 0 0 64px -24px rgb(224 163 92 / .5);
-  filter:saturate(1.02) contrast(1.05);
-  will-change:transform,opacity;
+  box-shadow:0 34px 90px rgb(0 0 0 / .66), 0 0 70px -24px rgb(224 163 92 / .45);
+  will-change:transform,opacity,filter;
 }
 .shot__bar{flex:none;height:20px;display:flex;align-items:center;gap:4px;
   padding:0 8px;background:#17171a;border-bottom:1px solid rgb(236 234 228 / .1)}
@@ -517,11 +477,6 @@ a{color:inherit;text-decoration:none}
   background:rgb(236 234 228 / .24);display:block}
 .shot img{display:block;width:100%;height:100%;object-fit:cover;
   object-position:top center}
-
-/* вспышка затвора на склейке */
-.reel__flash{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;
-  background:radial-gradient(70% 60% at 50% 50%, rgb(255 246 230 / .9), rgb(255 246 230 / .25) 70%, transparent 100%);
-  mix-blend-mode:screen}
 
 /* телефон — отдельным слоем, его ничем не срезает.
    Скругление эллиптическое, как на jjettas: 15%/7.1% и 13.4%/6.4% */
@@ -695,11 +650,7 @@ a{color:inherit;text-decoration:none}
   .hero__meta .col.wide{grid-column:1/-1;order:-1}
 
   .reel__stage{padding-top:calc(var(--pad) + 3.2rem)}
-  .reel__film{top:4%;bottom:4%}
-  .reel__perf{height:11px}
-  .reel__edge--top{top:13px}
-  .reel__edge--bot{bottom:13px}
-  .shot{width:88vw;height:auto}
+  .shot{width:84vw}
   .phone{width:52vw;height:auto}
   .reel__foot{min-height:4.6em}
   .reel__count b{font-size:1.5rem}
