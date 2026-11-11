@@ -377,13 +377,16 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   const numEl  = document.getElementById('reelNum');
   const nameEl = document.getElementById('reelName');
   const catEl  = document.getElementById('reelCat');
-  const vid    = document.getElementById('phoneVid');
+  const mobs   = [...document.querySelectorAll('.phone__feed .mob')];
   const sky    = document.getElementById('phoneSky');
   const bgVid  = document.getElementById('reelVideo');
   if (!sec || !shots.length || typeof gsap === 'undefined') return;
 
   const N = shots.length;
-  if (vid) vid.play().catch(() => {});
+
+  /* стопка мобильных версий: виден верхний, остальные ждут снизу */
+  gsap.set(mobs, { yPercent: 100 });
+  gsap.set(mobs[0], { yPercent: 0 });
 
   /* небо в экране: на телефоне второй ролик не качаем, там пролёт
      просто уходит в цвет страницы */
@@ -482,7 +485,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   });
 
   /* ── АКТ 1 ── полоса едет, работы проходят через центр */
-  tl.to(pos, { v: N - 1, duration: 7.5, ease: 'none', onUpdate: layout }, 0);
+  tl.to(pos, { v: N - 1, duration: 6, ease: 'none', onUpdate: layout }, 0);
 
   /* ── АКТ 2 ── работы разлетаются по кругу */
   tl.addLabel('fly', '+=.4');
@@ -501,8 +504,24 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   }, 'gather');
   tl.to(phone, { scale: 1, autoAlpha: 1, ease: 'expo.out', duration: .95 }, 'gather+=.5');
 
-  /* ── АКТ 3 ── короткая пауза на телефоне */
-  tl.to({}, { duration: .4 });
+  /* ── АКТ 3 ── В ТЕЛЕФОНЕ ЛИСТАЮТСЯ МОБИЛЬНЫЕ ВЕРСИИ
+     Те же шесть сайтов, что выше шли полосой как десктоп, здесь идут
+     как телефон: каждый приезжает снизу, чуть проматывается и уходит
+     вверх — ровно так, как их листают на самом деле. Полоса показала,
+     что я делаю; телефон показывает, что это работает и на нём. */
+  mobs.forEach((m, i) => {
+    const L = 'ph' + i;
+    tl.addLabel(L);
+    tl.call(() => setMeta(i), null, L);
+
+    if (i > 0) {
+      tl.to(mobs[i - 1], { yPercent: -100, ease: 'power2.inOut', duration: .3 }, L);
+      tl.fromTo(m, { yPercent: 100 },
+        { yPercent: 0, ease: 'power2.inOut', duration: .3, immediateRender: false }, L);
+    }
+    /* лёгкая промотка самой страницы, пока кадр стоит */
+    tl.to(m, { yPercent: -7, ease: 'none', duration: .22 }, L + '+=.3');
+  });
 
   /* ── АКТ 4 ── ПРОЛЁТ СКВОЗЬ ТЕЛЕФОН
 
@@ -522,8 +541,8 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   /* 1. служебное уходит — остаётся только аппарат */
   tl.to([notch, head, foot], { autoAlpha: 0, ease: 'power2.in', duration: .4 }, 'dive');
 
-  /* 2. экран меняет содержимое: ролик → небо */
-  if (vid) tl.to(vid, { autoAlpha: 0, ease: 'none', duration: .55 }, 'dive+=.15');
+  /* 2. экран меняет содержимое: сайты → небо */
+  tl.to('.phone__feed', { autoAlpha: 0, ease: 'none', duration: .5 }, 'dive+=.15');
   if (sky) tl.to(sky, { autoAlpha: 1, ease: 'none', duration: .55 }, 'dive+=.15');
   tl.to(screen, { backgroundColor: '#0b0b0c', ease: 'none', duration: .55 }, 'dive+=.15');
 

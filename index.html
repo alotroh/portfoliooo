@@ -180,8 +180,17 @@
       <!-- телефон отдельным слоем, его края ничем не срезает -->
       <div class="phone" id="reelPhone">
         <span class="phone__screen">
-          <video id="phoneVid" src="media/phone.mp4" muted loop playsinline
-                 poster="media/shots/beauty.webp"></video>
+          <!-- В телефоне листаются настоящие мобильные версии этих же
+               сайтов — те, что выше шли полосой как десктоп. Снято с
+               живых адресов на экране 390×844. -->
+          <span class="phone__feed" id="phoneFeed">
+            <img class="mob" src="media/mobile/vanta.jpg"    alt="VANTA на телефоне">
+            <img class="mob" src="media/mobile/nor.jpg"      alt="NØR на телефоне">
+            <img class="mob" src="media/mobile/elena.jpg"    alt="Сайт Елены на телефоне">
+            <img class="mob" src="media/mobile/burger.jpg"   alt="TROHAMBURGER на телефоне">
+            <img class="mob" src="media/mobile/pluslead.jpg" alt="PlusLead на телефоне">
+            <img class="mob" src="media/mobile/beauty.jpg"   alt="BEAUTYTROH на телефоне">
+          </span>
           <!-- небо внутри экрана: на нём держится пролёт сквозь корпус.
                Тот же ролик, что фоном у карточек, поэтому стык не виден -->
           <video id="phoneSky" class="phone__sky" src="media/field.mp4"
