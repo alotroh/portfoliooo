@@ -261,93 +261,70 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 
 
 /* ═══════════════════════════════════════════════════════════
-   ВХОД: РАКОРД С ОТСЧЁТОМ
-   Чёрно-белый, но не мёртвый: дышит лампа проектора, стрелка
-   обходит круг, цифры щёлкают 3 → 2 → 1, на нуле вспышка.
+   ВХОД: КРАСКА
+
+   Каждый мазок рисует себя сам: длина штриха гасится от полной
+   до нуля, поэтому кисть идёт вдоль своей линии. Это главное
+   отличие от «мазка, который появился» — такой растёт из точки
+   или выезжает плашкой, и живой краской не выглядит.
+
+   Имя открывается срезом вслед за последним мазком.
    ═══════════════════════════════════════════════════════════ */
 (function () {
-  const leader = document.getElementById('leader');
-  const word   = document.getElementById('leaderWord');
-  const sub    = document.getElementById('leaderSub');
-  const frame  = document.getElementById('leaderFrame');
-  const count  = document.getElementById('leaderCount');
-  const flash  = document.getElementById('leaderFlash');
-  if (!leader || !word || typeof gsap === 'undefined') return;
+  const intro   = document.getElementById('intro');
+  const word    = document.getElementById('introWord');
+  const sub     = document.getElementById('introSub');
+  const strokes = [...document.querySelectorAll('.intro__strokes .stroke')];
+  if (!intro || !word || !strokes.length || typeof gsap === 'undefined') return;
 
   scrollTo(0, 0);
   const block = e => e.preventDefault();
   addEventListener('wheel', block, { passive: false });
   addEventListener('touchmove', block, { passive: false });
 
-  /* --sw держим на самом .leader: от него наследуются и стрелка,
-     и коническая маска на имени — они всегда идут одним сектором */
-  const sweep = { v: 0 };
-  leader.style.setProperty('--sw', 0);
+  /* Длину штриха спрашиваем у самого пути: она зависит от кривой,
+     и подбирать её руками бессмысленно. */
+  strokes.forEach(s => {
+    const len = s.getTotalLength();
+    s.style.strokeDasharray = len;
+    s.style.strokeDashoffset = len;
+  });
+
   gsap.set(sub, { autoAlpha: 0, yPercent: 40 });
-  gsap.set('.leader__corner', { autoAlpha: 0 });
 
   const heroParts = ['#heroMedia', '#knock', '.hero__bottom'];
   gsap.set(heroParts, { xPercent: 100 });
 
-  /* короткая вспышка кадра */
-  const blink = (o, d) => {
-    if (!flash) return;
-    gsap.fromTo(flash, { opacity: 0 }, { opacity: o, duration: d, yoyo: true, repeat: 1, ease: 'none' });
-  };
-
-  let shown = 3;
+  const wipe = { v: 0 };
 
   gsap.timeline({
     onComplete() {
       removeEventListener('wheel', block);
       removeEventListener('touchmove', block);
-      leader.remove();
+      intro.remove();
       scrollLock.off();          // прокрутку отпускает вход
       ScrollTrigger.refresh();
     }
   })
-    /* 1. проступают служебные отметки ракорда */
-    .to('.leader__corner', { autoAlpha: 1, duration: .5, ease: 'power2.out', stagger: .12 })
-
-    /* 2. стрелка обходит круг, тем же сектором проявляя имя,
-          а цифра отсчёта щёлкает на каждой трети */
-    .to(sweep, {
-      v: 360, duration: 2.3, ease: 'power1.inOut',
-      onUpdate() {
-        leader.style.setProperty('--sw', sweep.v);
-        if (frame) frame.textContent =
-          'кадр ' + String(Math.round(sweep.v / 3)).padStart(3, '0');
-
-        /* Вспышки на каждой цифре убраны: при таком темпе это читалось
-           как мигание лампы, а не как отсчёт. Остался щелчок и сама
-           цифра, которая встаёт на место. */
-        const next = Math.max(1, 3 - Math.floor(sweep.v / 120));
-        if (count && next !== shown) {
-          shown = next;
-          count.textContent = next;
-          gsap.fromTo(count,
-            { scale: 1.35, opacity: 0 },
-            { scale: 1, opacity: 1, duration: .45, ease: 'expo.out' });
-        }
-      }
-    }, '-=.25')
-
-    /* 3. ноль: вспышка, имя остаётся целиком.
-          Срез на этом месте снимаем совсем: держать его на 100%
-          незачем, а любая ошибка округления стоила бы отрезанной
-          буквы в самом конце входа. */
-    .add(() => {
-      blink(.78, .09);
-      word.style.clipPath = 'none';
+    /* 1. мазки идут один за другим, с нахлёстом.
+          inOut, а не out: кисть разгоняется и тормозит у края,
+          равномерное движение выдаёт машину. */
+    .to(strokes, {
+      strokeDashoffset: 0, duration: 1.05, ease: 'power2.inOut', stagger: .17
     })
-    .to(count, { autoAlpha: 0, duration: .35, ease: 'power2.out' }, '<')
-    .to(sub, { autoAlpha: 1, yPercent: 0, duration: .8, ease: 'expo.out' }, '-=.3')
+
+    /* 2. имя открывается срезом вслед за последним мазком */
+    .to(wipe, {
+      v: 100, duration: .95, ease: 'expo.out',
+      onUpdate() { word.style.clipPath = 'inset(0 ' + (100 - wipe.v) + '% 0 0)'; }
+    }, '-=.55')
+    .to(sub, { autoAlpha: 1, yPercent: 0, duration: .8, ease: 'expo.out' }, '-=.5')
     .addLabel('slide', '+=.45')
 
-    /* 4. ракорд уезжает влево, герой приходит справа */
-    .to(leader,    { xPercent: -100, duration: 1.1, ease: 'expo.inOut' }, 'slide')
+    /* 3. краска уезжает влево, герой приходит справа */
+    .to(intro,     { xPercent: -100, duration: 1.1, ease: 'expo.inOut' }, 'slide')
     .to(heroParts, { xPercent: 0,    duration: 1.1, ease: 'expo.inOut' }, 'slide')
-    /* 5. и сам герой собирается */
+    /* 4. и сам герой собирается */
     .from('#heroMedia', { scale: 1.2, duration: 2, ease: 'expo.out' }, 'slide+=.25')
     .from('#knockText', { scale: 1.12, duration: 1.6, ease: 'expo.out' }, 'slide+=.33')
     .from('.nav > *', { yPercent: -130, opacity: 0, duration: .85, ease: 'expo.out', stagger: .07 }, 'slide+=.4')

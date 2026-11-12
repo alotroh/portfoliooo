@@ -517,70 +517,43 @@ a{color:inherit;text-decoration:none}
   font-size:clamp(1.3rem,3.2vw,2.4rem);line-height:1;letter-spacing:-.035em}
 .reel__cat{margin-top:.5rem}
 
-/* ═══════════ ВХОД: РАКОРД ═══════════ */
-.leader{
-  position:fixed;inset:0;z-index:200;overflow:hidden;background:#09090a;
+/* ═══════════ ВХОД: КРАСКА ═══════════ */
+.intro{
+  position:fixed;inset:0;z-index:200;overflow:hidden;background:#0c0b0a;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:clamp(.6rem,1.6vh,1.2rem);will-change:transform;
 }
-/* лампа проектора: тёплое пятно, которое дышит — без неё экран мёртвый */
-.leader__lamp{
-  position:absolute;left:50%;top:50%;width:150vmin;height:150vmin;
-  transform:translate(-50%,-50%);pointer-events:none;
-  background:
-    radial-gradient(circle at 50% 50%, rgb(250 232 206 / .22), transparent 54%),
-    radial-gradient(circle at 50% 50%, rgb(224 163 92 / .18), transparent 38%),
-    radial-gradient(circle at 50% 50%, rgb(140 158 184 / .10), transparent 66%);
-}
 
-.leader__marks{position:absolute;width:min(78vmin,560px);height:min(78vmin,560px);
-  left:50%;top:50%;transform:translate(-50%,-50%);display:block}
+/* холст с мазками занимает весь экран и кроется по принципу slice:
+   мазки должны уходить за края, а не вписываться в кадр */
+.intro__art{position:absolute;inset:0;width:100%;height:100%;display:block}
 
-/* бегущая стрелка прицела */
-.leader__sweep{
-  position:absolute;left:50%;top:50%;
-  width:min(72vmin,520px);height:min(72vmin,520px);border-radius:50%;
-  transform:translate(-50%,-50%) rotate(calc(var(--sw,0) * 1deg));
-  background:conic-gradient(from -90deg,
-    rgb(250 232 206 / .3) 0deg, rgb(224 163 92 / .08) 26deg, transparent 54deg);
-}
+/* Мазки перекрываются как настоящая краска: screen вместо обычного
+   наложения, иначе верхний просто закрывает нижний плашкой. */
+.intro__strokes{mix-blend-mode:screen}
+.stroke{opacity:.92}
 
-
-/* имя проявляется тем же сектором, что и бежит стрелка */
-.leader__word{
+/* имя поверх краски. difference держит его читаемым и на тёмном
+   фоне, и на светлом мазке — подбирать цвет под каждый не нужно */
+.intro__word{
   position:relative;z-index:2;
   font-family:var(--f-display);font-weight:800;
   font-size:clamp(2.4rem,11.5vw,9.5rem);line-height:.85;letter-spacing:-.05em;
-  color:#f6f4ee;
-  text-shadow:0 0 42px rgb(250 232 206 / .28);
-
-  /* Проявляем срезом, а не маской. От маски браузер рисует слово в
-     отдельный слой, и прямоугольник этого слоя проступает на фоне —
-     это и был тот самый «прозрачный прямоугольник» вокруг TROHA.
-     Срез идёт тем же счётчиком, что и стрелка: 0° — ничего,
-     360° — имя целиком. */
-  clip-path:inset(0 calc(100% - var(--sw,0) * 100% / 360) 0 0);
+  color:#f6f4ee;mix-blend-mode:difference;
+  clip-path:inset(0 100% 0 0);
 }
-.leader__sub{position:relative;z-index:2;color:rgb(236 234 228 / .6)}
+.intro__sub{position:relative;z-index:2;color:rgb(236 234 228 / .62)}
 
-.leader__corner{position:absolute;z-index:2;color:rgb(236 234 228 / .42)}
-.leader__corner--tl{left:var(--pad);top:var(--pad)}
-.leader__corner--bl{left:var(--pad);bottom:var(--pad)}
-.leader__corner--br{right:var(--pad);bottom:var(--pad)}
-.leader__corner b{font-family:var(--f-display);font-weight:500;
-  color:var(--fg);font-size:1.3em;letter-spacing:0;display:inline-block;
-  min-width:1ch;text-align:center}
-
-.leader__grain{
-  position:absolute;inset:0;z-index:3;pointer-events:none;
-  opacity:.5;mix-blend-mode:overlay;
+/* зерно держим ПОД именем: слой с наложением поверх элемента,
+   который сам блендится, однажды уже проявил свой прямоугольник
+   вокруг логотипа — второй раз наступать на это незачем */
+.intro__grain{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  opacity:.4;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
 }
-/* вспышка на нуле отсчёта */
-.leader__flash{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;
-  background:#fbf7ef}
 
-@media (prefers-reduced-motion:reduce){ .leader{display:none} }
+@media (prefers-reduced-motion:reduce){ .intro{display:none} }
 
 /* ═══════════════════════════════════════════════════════════
    ФИНАЛ: светлый лист наезжает на карточки

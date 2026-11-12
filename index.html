@@ -12,33 +12,64 @@
 </head>
 <body>
 
-<!-- ══════════ ВХОД: РАКОРД ══════════
-     Отсчёт перед началом плёнки: прицел, бегущая стрелка, цифры
-     и вспышка на нуле. Связывает вход со второй секцией, где
-     лента уже настоящая и бежит по-настоящему.                   -->
-<div class="leader" id="leader">
-  <span class="leader__lamp" aria-hidden="true"></span>
+<!-- ══════════ ВХОД: КРАСКА ══════════
+     Три мазка проходят по экрану и оставляют за собой имя.
+     Каждый мазок не «появляется», а рисует сам себя вдоль своей
+     линии — как кисть, которую ведут. Рваный край даёт фильтр
+     с турбулентностью: без него это были бы гладкие ленты, а не
+     краска.                                                      -->
+<div class="intro" id="intro">
+  <svg class="intro__art" id="introArt" viewBox="0 0 1200 620"
+       preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <!-- Кисть собрана из двух шумов. Первый гнёт контур — край
+           перестаёт быть ровной лентой. Второй выедает краску
+           изнутри тонкими полосами вдоль мазка: так выглядит кисть,
+           на которой краски уже мало. Без второго шума получается
+           гладкая лента, а не мазок. -->
+      <filter id="brush" x="-30%" y="-70%" width="160%" height="240%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.016 0.028"
+                      numOctaves="4" seed="11" result="edge"/>
+        <feDisplacementMap in="SourceGraphic" in2="edge" scale="24"
+                           xChannelSelector="R" yChannelSelector="G" result="bent"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.17"
+                      numOctaves="2" seed="3" result="dry"/>
+        <feColorMatrix in="dry" type="matrix" result="dryA"
+                       values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.22"/>
+        <feComposite in="bent" in2="dryA" operator="in"/>
+      </filter>
+      <!-- вторая кисть, помельче, для тонких мазков -->
+      <filter id="brushFine" x="-30%" y="-70%" width="160%" height="240%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.024 0.05"
+                      numOctaves="3" seed="5" result="edge"/>
+        <feDisplacementMap in="SourceGraphic" in2="edge" scale="15"
+                           xChannelSelector="R" yChannelSelector="G" result="bent"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.22"
+                      numOctaves="2" seed="8" result="dry"/>
+        <feColorMatrix in="dry" type="matrix" result="dryA"
+                       values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.8 0 0 0 -0.2"/>
+        <feComposite in="bent" in2="dryA" operator="in"/>
+      </filter>
+    </defs>
 
-  <svg class="leader__marks" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-    <circle cx="50" cy="50" r="42" fill="none" stroke="#eceae4" stroke-width=".16" opacity=".22"/>
-    <circle cx="50" cy="50" r="36" fill="none" stroke="#eceae4" stroke-width=".22" opacity=".5"/>
-    <circle cx="50" cy="50" r="25" fill="none" stroke="#eceae4" stroke-width=".22" opacity=".3"/>
-    <line x1="50" y1="-30" x2="50" y2="130" stroke="#eceae4" stroke-width=".22" opacity=".28"/>
-    <line x1="-30" y1="50" x2="130" y2="50" stroke="#eceae4" stroke-width=".22" opacity=".28"/>
+    <!-- мазки идут под разными углами и пересекаются. Параллельные
+         читаются как полоски загрузки, крест-накрест — как холст -->
+    <g class="intro__strokes" fill="none" stroke-linecap="round">
+      <path class="stroke" filter="url(#brush)"     stroke="#b9c48d" stroke-width="122"
+            d="M-90 585 C 280 505, 640 205, 1290 95"/>
+      <path class="stroke" filter="url(#brush)"     stroke="#e0a35c" stroke-width="96"
+            d="M-90 175 C 330 285, 770 500, 1290 440"/>
+      <path class="stroke" filter="url(#brushFine)" stroke="#8a7fa8" stroke-width="58"
+            d="M205 700 C 315 430, 520 250, 690 -70"/>
+      <path class="stroke" filter="url(#brushFine)" stroke="#c47fa0" stroke-width="16"
+            d="M-70 440 C 350 370, 830 315, 1290 230"/>
+    </g>
   </svg>
 
-  <span class="leader__sweep" id="leaderSweep" aria-hidden="true"></span>
-
-  <div class="leader__word" id="leaderWord">TROHA</div>
-  <span class="leader__sub label" id="leaderSub">Веб-дизайн · Разработка</span>
-
-  <span class="leader__corner leader__corner--tl label">TROHA · 2026</span>
-  <!-- отсчёт ушёл в угол: раньше он стоял огромной цифрой за именем
-       и читался как прозрачный прямоугольник рядом с логотипом -->
-  <span class="leader__corner leader__corner--bl label">отсчёт <b id="leaderCount">3</b></span>
-  <span class="leader__corner leader__corner--br label" id="leaderFrame">кадр 000</span>
-  <span class="leader__grain" aria-hidden="true"></span>
-  <span class="leader__flash" id="leaderFlash" aria-hidden="true"></span>
+  <!-- имя поверх краски: difference держит его читаемым на любом мазке -->
+  <div class="intro__word" id="introWord">TROHA</div>
+  <span class="intro__sub label" id="introSub">Веб-дизайн · Разработка</span>
+  <span class="intro__grain" aria-hidden="true"></span>
 </div>
 
 <!-- кадровая полоса: раз пробегает по экрану на стыке героя и плёнки,
