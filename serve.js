@@ -85,9 +85,6 @@ http.createServer((req, res) => {
     return;
   }
 
-  /* исходники серверной части статикой не отдаём */
-  if (/^\/api(\/|$)/.test(url)) { json(404, { ok: false, error: 'not-found' }); return; }
-
   /* Windows умеет открывать один и тот же файл несколькими именами:
      короткое имя (GIT~1), поток внутри файла (index.html:secret),
      имя с точкой или пробелом на конце — система их молча отбросит.
@@ -115,9 +112,16 @@ http.createServer((req, res) => {
     }
 
     const rel = path.relative(ROOT, file);
+    const seg = rel.split(/[\\/]/);
     const outside = rel.startsWith('..') || path.isAbsolute(rel);
-    const hidden = rel.split(/[\\/]/).some(seg => seg.startsWith('.'));
-    if (outside || hidden) {
+    const hidden = seg.some(s => s.startsWith('.'));
+    /* Исходники серверной части статикой не отдаём. Проверять тут адрес
+       бесполезно ровно по той же причине, что и с .git: «/api\lead.js» не
+       попадает ни под одну проверку вида «начинается с /api/», а файл
+       открывает. Поэтому смотрим на разрешённый путь, и без учёта
+       регистра — на Windows /API/ ведёт туда же. */
+    const api = seg[0] && seg[0].toLowerCase() === 'api';
+    if (outside || hidden || api) {
       res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' }).end('403');
       return;
     }

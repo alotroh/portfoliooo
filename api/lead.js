@@ -56,12 +56,29 @@ function compose(p) {
   return text.length > 3900 ? text.slice(0, 3900) + '\n…' : text;
 }
 
+/* Что именно прислали, решают байты, а не тип из запроса: тип пишет
+   клиент, а клиентом может оказаться curl. Без этой проверки сюда
+   отправляется любой файл, и в телеграм он прилетает под тем именем,
+   которое выбрал отправитель, — например «договор.pdf.exe». */
+const KINDS = [
+  { type: 'image/jpeg', ext: 'jpg',
+    ok: b => b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF },
+  { type: 'image/png', ext: 'png',
+    ok: b => b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47 },
+  { type: 'image/webp', ext: 'webp',
+    ok: b => b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP' },
+  { type: 'application/pdf', ext: 'pdf',
+    ok: b => b.toString('latin1', 0, 5) === '%PDF-' }
+];
+
 function fromDataURL(data) {
-  const m = /^data:([^;,]+);base64,(.+)$/.exec(String(data || ''));
+  const m = /^data:[^;,]*;base64,(.+)$/.exec(String(data || ''));
   if (!m) return null;
-  const buf = Buffer.from(m[2], 'base64');
-  if (!buf.length || buf.length > MAX_FILE) return null;
-  return { type: m[1], buf };
+  let buf;
+  try { buf = Buffer.from(m[1], 'base64'); } catch { return null; }
+  if (buf.length < 12 || buf.length > MAX_FILE) return null;
+  const kind = KINDS.find(k => k.ok(buf));
+  return kind ? { kind, buf } : null;
 }
 
 async function tg(token, method, body, isForm) {
@@ -98,15 +115,20 @@ async function send(payload, ip) {
   });
 
   const files = Array.isArray(p.files) ? p.files.slice(0, MAX_FILES) : [];
+  let n = 0;
   for (const f of files) {
     const got = fromDataURL(f && f.data);
-    if (!got) continue;
-    const isImg = /^image\//.test(got.type);
-    const name = clean(f.name, 80) || (isImg ? 'photo.jpg' : 'file.pdf');
+    if (!got) continue;                       /* не картинка и не PDF — мимо */
+    const isImg = got.kind.type !== 'application/pdf';
+    /* имя придумываем сами, от расширения до номера: присланное имя
+       идёт отдельной подписью, где оно просто текст */
+    const name = 'lead-' + (++n) + '.' + got.kind.ext;
     const form = new FormData();
     form.append('chat_id', chat);
     form.append(isImg ? 'photo' : 'document',
-      new Blob([got.buf], { type: got.type }), name);
+      new Blob([got.buf], { type: got.kind.type }), name);
+    const claimed = clean(f && f.name, 60);
+    if (claimed) form.append('caption', 'имя у отправителя: ' + claimed);
     try {
       await tg(token, isImg ? 'sendPhoto' : 'sendDocument', form, true);
     } catch (e) { /* один не ушёл — остальные и текст уже на месте */ }
