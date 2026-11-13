@@ -556,14 +556,20 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
      самого верха — полтора оборота колеса ты смотрел на пустую бумагу.
      Теперь он доезжает, пока ещё наполовину за кадром, и дальше ты
      просто читаешь. */
-  gsap.fromTo(sheet, { yPercent: 9 }, {
+  /* На карточки наезжает тот лист, который идёт первым. Сейчас это
+     подбор, и тень с наездом принадлежат ему; «о себе» просто
+     продолжает ту же бумагу ниже. */
+  const riser = document.getElementById('quizSheet') || sheet;
+  const trig  = document.getElementById('quiz') || about;
+
+  gsap.fromTo(riser, { yPercent: 9 }, {
     yPercent: 0, ease: 'none',
-    scrollTrigger: { trigger: about, start: 'top bottom', end: 'top 62%', scrub: 1 }
+    scrollTrigger: { trigger: trig, start: 'top bottom', end: 'top 62%', scrub: 1 }
   });
 
   if (stage) gsap.to(stage, {
     autoAlpha: .45, ease: 'none',
-    scrollTrigger: { trigger: about, start: 'top 92%', end: 'top 42%', scrub: 1 }
+    scrollTrigger: { trigger: trig, start: 'top 92%', end: 'top 42%', scrub: 1 }
   });
 
   gsap.from('.about__head > *', {

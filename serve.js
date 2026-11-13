@@ -51,6 +51,43 @@ http.createServer((req, res) => {
     return;
   }
 
+  const json = (code, obj) => {
+    res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(obj));
+  };
+
+  /* Подбор. Локально принимаем заявку тем же кодом, что работает на
+     проде, — чтобы проверять не заглушку, а настоящий путь. Без токена
+     в окружении заявка никуда не уходит, но ответ приходит успешный:
+     так видно, что форма работает. */
+  if (url === '/api/lead') {
+    if (req.method !== 'POST') { json(405, { ok: false, error: 'post-only' }); return; }
+    let raw = '', over = false;
+    req.on('data', c => {
+      raw += c;
+      if (raw.length > 5e6) { over = true; req.destroy(); }
+    });
+    req.on('end', async () => {
+      if (over) { json(413, { ok: false, error: 'too-big' }); return; }
+      let body = null;
+      try { body = JSON.parse(raw); } catch { /* ниже отдадим 400 */ }
+      let out;
+      try { out = await require('./api/lead.js').send(body, '127.0.0.1'); }
+      catch (e) { console.error('заявка не ушла:', e.message); out = { status: 502, msg: 'send-failed' }; }
+      if (out.status === 503) {
+        const a = (body && body.answers || []).length;
+        const f = (body && body.files || []).length;
+        console.log(`заявка принята локально: ответов ${a}, файлов ${f} — токен не задан, в телеграм не ушла`);
+        out = { status: 200, msg: 'ok' };
+      }
+      json(out.status, { ok: out.status === 200, error: out.status === 200 ? undefined : out.msg });
+    });
+    return;
+  }
+
+  /* исходники серверной части статикой не отдаём */
+  if (/^\/api(\/|$)/.test(url)) { json(404, { ok: false, error: 'not-found' }); return; }
+
   /* Windows умеет открывать один и тот же файл несколькими именами:
      короткое имя (GIT~1), поток внутри файла (index.html:secret),
      имя с точкой или пробелом на конце — система их молча отбросит.

@@ -701,3 +701,246 @@ a{color:inherit;text-decoration:none}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ПОДБОР
+   Тот же лист бумаги, что и «о себе»: палитра, фон и радиус
+   общие. Этот лист идёт первым, поэтому наезд на карточки и
+   тень достались ему, а нижний просто продолжает бумагу.
+   ═══════════════════════════════════════════════════════════ */
+.quiz{
+  position:relative;z-index:6;
+  margin-top:-16vh;padding:0;
+  border:0;background:transparent;
+}
+.quiz__sheet{
+  background:var(--paper);color:var(--ink);
+  border-radius:clamp(18px,2.4vw,34px) clamp(18px,2.4vw,34px) 0 0;
+  padding:clamp(2.6rem,7vw,6rem) var(--pad) clamp(2rem,4vw,3.2rem);
+  box-shadow:0 -34px 90px rgb(0 0 0 / .55);
+  will-change:transform;
+}
+/* нижний лист продолжает этот: без скругления, без тени и без
+   собственного наезда, иначе посреди бумаги виден шов */
+.quiz + .about{margin-top:0}
+.quiz + .about .about__sheet{border-radius:0;box-shadow:none}
+
+.quiz__head{display:flex;justify-content:space-between;
+  padding-bottom:1rem;border-bottom:1px solid var(--ink-line)}
+.quiz__head .label{color:var(--ink-mute)}
+
+.quiz__body{
+  position:relative;
+  padding:clamp(2.2rem,5.5vw,4.4rem) 0 clamp(1.4rem,3vw,2.4rem);
+  min-height:clamp(380px,46vh,560px);
+}
+
+/* Огромная цифра шага уходит за левый край листа. Это и счётчик,
+   и единственный осознанный слом симметрии на развороте. */
+.quiz__num{
+  position:absolute;left:calc(var(--pad) * -1);top:-.12em;
+  font-family:var(--f-display);font-weight:800;
+  font-size:clamp(7rem,22vw,18rem);line-height:.72;letter-spacing:-.05em;
+  color:var(--ink);opacity:.055;pointer-events:none;user-select:none;
+}
+
+.quiz__step{position:relative;z-index:1}
+
+.quiz__q{
+  font-family:var(--f-display);font-weight:400;
+  font-size:clamp(1.55rem,4.4vw,3.4rem);line-height:1.04;letter-spacing:-.035em;
+  max-width:19ch;margin:0 0 clamp(1.6rem,3.4vw,2.8rem);
+}
+/* обрез, из-под которого выезжает строка вопроса */
+.quiz__q .m{display:block;overflow:hidden;padding-bottom:.08em}
+.quiz__q i{display:block;font-style:normal}
+
+.quiz__hint{color:var(--ink-mute);max-width:46ch;
+  margin:-.9rem 0 clamp(1.4rem,3vw,2.2rem);font-size:.95em}
+.quiz__sub{display:block;color:var(--ink-mute);
+  margin:0 0 .9rem;padding-top:.6rem;border-top:1px solid var(--ink-line)}
+.quiz__extra:empty{display:none}
+
+/* ── первый вопрос: четыре картинки ──
+   Нарочно не ровная сетка: соседние карточки стоят на разной
+   высоте. Ровные четыре прямоугольника читаются как шаблон. */
+.quiz__cards{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:clamp(.7rem,1.6vw,1.4rem);align-items:start;
+}
+.quiz__cards .quiz__card:nth-child(2){margin-top:clamp(.8rem,2.4vw,2.2rem)}
+.quiz__cards .quiz__card:nth-child(4){margin-top:clamp(.5rem,1.6vw,1.5rem)}
+
+.quiz__card{
+  appearance:none;border:0;padding:0;margin:0;text-align:left;cursor:pointer;
+  background:transparent;color:inherit;font:inherit;display:block;
+  transition:transform .6s var(--e-reveal);
+}
+.quiz__card img{
+  width:100%;aspect-ratio:4/5;object-fit:cover;display:block;
+  border-radius:4px;background:#e2dbcd;
+  filter:grayscale(.3) contrast(1.02);
+  transition:filter .55s var(--e-ui), box-shadow .55s var(--e-ui);
+  box-shadow:0 1px 0 rgb(23 20 15 / .14);
+}
+.quiz__card span{
+  display:block;margin-top:.85rem;
+  font-size:clamp(.82rem,1.05vw,.98rem);line-height:1.3;
+  letter-spacing:-.01em;color:var(--ink);
+}
+.quiz__card i{
+  display:block;margin-top:.4rem;height:1px;background:var(--ink-line);
+  transform:scaleX(0);transform-origin:0 50%;
+  transition:transform .55s var(--e-reveal);
+}
+@media (hover:hover){
+  .quiz__card:hover{transform:translateY(-5px)}
+  .quiz__card:hover img{filter:grayscale(0) contrast(1.04);
+    box-shadow:0 14px 34px rgb(23 20 15 / .22)}
+  .quiz__card:hover i{transform:scaleX(1)}
+}
+.quiz__card:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
+
+/* ── обычные варианты: строки на волосяных линиях, не плашки ── */
+.quiz__opts{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink-line)}
+.quiz__opt{
+  appearance:none;border:0;background:transparent;color:inherit;font:inherit;
+  width:100%;text-align:left;cursor:pointer;display:flex;align-items:baseline;
+  gap:clamp(.8rem,2vw,1.6rem);
+  padding:clamp(.85rem,1.9vw,1.35rem) 0;
+  border-bottom:1px solid var(--ink-line);
+  font-size:clamp(1rem,1.7vw,1.35rem);letter-spacing:-.015em;
+  transition:padding-left .5s var(--e-reveal), color .4s var(--e-ui);
+}
+.quiz__opt b{
+  font-weight:400;color:var(--ink-mute);font-size:.72em;
+  letter-spacing:.1em;flex:none;min-width:2.2em;
+  font-family:var(--f-body);
+}
+@media (hover:hover){
+  .quiz__opt:hover{padding-left:clamp(.6rem,1.4vw,1.1rem)}
+  .quiz__opt:hover b{color:var(--ink-acc)}
+}
+.quiz__opt[aria-pressed="true"]{color:var(--ink-acc)}
+.quiz__opt:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+/* ── поля ── */
+.quiz__field{
+  width:100%;background:transparent;border:0;border-bottom:1px solid var(--ink);
+  color:var(--ink);font-family:var(--f-display);font-weight:300;
+  font-size:clamp(1.15rem,2.6vw,2rem);line-height:1.3;letter-spacing:-.03em;
+  padding:.5rem 0 .7rem;border-radius:0;
+}
+.quiz__field::placeholder{color:rgb(23 20 15 / .3)}
+.quiz__field:focus{outline:0;border-bottom-color:var(--ink-acc)}
+textarea.quiz__field{
+  font-family:var(--f-body);font-size:clamp(.98rem,1.3vw,1.1rem);
+  line-height:1.5;letter-spacing:0;resize:vertical;min-height:7.5em;
+  border:1px solid var(--ink-line);padding:.9rem 1rem;border-radius:3px;
+}
+textarea.quiz__field:focus{border-color:var(--ink-acc)}
+
+/* ── файлы ── */
+.quiz__files{margin-top:clamp(1rem,2.2vw,1.6rem)}
+.quiz__drop{
+  display:flex;align-items:center;gap:.8rem;cursor:pointer;position:relative;
+  border:1px dashed rgb(23 20 15 / .3);border-radius:3px;
+  padding:clamp(.9rem,2vw,1.3rem) clamp(1rem,2.2vw,1.5rem);
+  color:var(--ink-mute);transition:border-color .4s var(--e-ui), color .4s var(--e-ui);
+}
+.quiz__drop:hover,.quiz__drop.is-over{border-color:var(--ink-acc);color:var(--ink)}
+.quiz__drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.quiz__list{list-style:none;margin:.8rem 0 0;padding:0;display:flex;
+  flex-wrap:wrap;gap:.5rem}
+.quiz__file{
+  display:inline-flex;align-items:center;gap:.5rem;
+  border:1px solid var(--ink-line);border-radius:999px;
+  padding:.32rem .4rem .32rem .8rem;font-size:.82rem;color:var(--ink-mute);
+  max-width:100%;
+}
+.quiz__file em{font-style:normal;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:14ch}
+.quiz__file button{
+  appearance:none;border:0;background:rgb(23 20 15 / .08);color:var(--ink);
+  width:1.35rem;height:1.35rem;border-radius:50%;cursor:pointer;
+  font:inherit;line-height:1;flex:none}
+.quiz__file button:hover{background:rgb(23 20 15 / .18)}
+
+/* ── кнопки ── */
+.quiz__row{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;
+  margin-top:clamp(1.6rem,3.4vw,2.6rem)}
+.quiz__go{
+  appearance:none;border:0;cursor:pointer;font:inherit;
+  background:var(--ink);color:var(--paper);
+  padding:clamp(.85rem,1.7vw,1.1rem) clamp(1.6rem,3vw,2.4rem);
+  border-radius:999px;letter-spacing:-.01em;
+  transition:transform .5s var(--e-reveal), opacity .4s var(--e-ui);
+}
+.quiz__go:hover{transform:translateY(-2px)}
+.quiz__go[disabled]{opacity:.35;cursor:not-allowed;transform:none}
+.quiz__back{
+  appearance:none;border:0;background:transparent;cursor:pointer;
+  font-family:var(--f-body);font-size:clamp(.625rem,.75vw,.6875rem);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);
+  padding:.4rem 0;
+}
+.quiz__back:hover{color:var(--ink)}
+.quiz__skip{background:transparent;color:var(--ink-mute);
+  border:1px solid var(--ink-line)}
+.quiz__skip:hover{color:var(--ink);border-color:var(--ink)}
+
+/* ── согласие ── */
+.quiz__consent{
+  display:flex;gap:.8rem;align-items:flex-start;
+  margin-top:clamp(1.4rem,3vw,2.2rem);
+  font-size:.86rem;line-height:1.45;color:var(--ink-mute);max-width:62ch;
+}
+.quiz__consent input{
+  appearance:none;flex:none;width:1.15rem;height:1.15rem;margin-top:.1rem;
+  border:1px solid var(--ink);border-radius:2px;cursor:pointer;
+  background:transparent;transition:background .3s var(--e-ui);
+}
+.quiz__consent input:checked{background:var(--ink)}
+.quiz__consent input:checked::after{
+  content:'';display:block;width:.34rem;height:.62rem;
+  margin:.1rem auto 0;border:solid var(--paper);
+  border-width:0 2px 2px 0;transform:rotate(42deg)}
+.quiz__consent input:focus-visible{outline:2px solid var(--ink-acc);outline-offset:2px}
+.quiz__consent a{color:var(--ink);text-decoration:underline;
+  text-underline-offset:.2em}
+
+/* ── финал ── */
+.quiz__channels{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.6rem}
+.quiz__ch{
+  appearance:none;cursor:pointer;font:inherit;
+  background:transparent;color:var(--ink);
+  border:1px solid var(--ink-line);border-radius:999px;
+  padding:.6rem 1.3rem;letter-spacing:-.01em;
+  transition:border-color .4s var(--e-ui), background .4s var(--e-ui);
+}
+.quiz__ch:hover{border-color:var(--ink)}
+.quiz__ch[aria-pressed="true"]{background:var(--ink);color:var(--paper);
+  border-color:var(--ink)}
+
+.quiz__note{color:var(--ink-mute);font-size:.86rem;margin-top:1rem;max-width:52ch}
+.quiz__err{color:#8d3326;font-size:.86rem;margin-top:.8rem;min-height:1.2em}
+.quiz__nojs{color:var(--ink-mute);padding:2rem 0}
+.quiz__nojs a{color:var(--ink)}
+
+/* тонкая линия прогресса по низу листа вместо полоски «шаг 2 из 5» */
+.quiz__rail{height:1px;background:var(--ink-line);position:relative;
+  margin-top:clamp(1rem,2.4vw,1.8rem)}
+.quiz__rail i{position:absolute;left:0;top:0;height:1px;width:0;
+  background:var(--ink-acc);transition:width .8s var(--e-reveal)}
+
+/* ловушка для ботов: настоящий человек её не видит */
+.quiz__trap{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+
+@media (max-width:860px){
+  .quiz__cards{grid-template-columns:repeat(2,1fr);gap:1rem .8rem}
+  .quiz__cards .quiz__card:nth-child(2),
+  .quiz__cards .quiz__card:nth-child(4){margin-top:0}
+  .quiz__num{left:0;font-size:clamp(5rem,20vw,9rem);opacity:.045}
+  .quiz__body{min-height:0;padding-top:clamp(1.6rem,6vw,2.6rem)}
+  .quiz__q{max-width:none}
+}

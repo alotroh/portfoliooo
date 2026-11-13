@@ -373,6 +373,36 @@
   </div>
 </section>
 
+<!-- ─────────── ПОДБОР ───────────
+     Лист бумаги наезжает на летающие карточки — это та же палитра, что
+     и у блока «о себе» ниже, поэтому два листа читаются как один
+     разворот. Шаги рисует quiz.js: держать 17 панелей в разметке
+     бессмысленно, тексты правятся в одном месте. -->
+<section class="quiz" id="quiz">
+  <div class="quiz__sheet" id="quizSheet">
+
+    <div class="quiz__head">
+      <span class="label">Подбор</span>
+      <span class="label quiz__meta" id="quizMeta">Пара минут</span>
+    </div>
+
+    <div class="quiz__body">
+      <span class="quiz__num" id="quizNum" aria-hidden="true">01</span>
+      <div class="quiz__stage" id="quizStage" aria-live="polite"></div>
+    </div>
+
+    <noscript>
+      <p class="quiz__nojs">
+        Подбор работает со скриптами. Если они выключены — просто напишите
+        мне в <a href="https://t.me/ceoofmembers">телеграм</a>, разберёмся
+        на словах.
+      </p>
+    </noscript>
+
+    <div class="quiz__rail" aria-hidden="true"><i id="quizRail"></i></div>
+  </div>
+</section>
+
 <!-- ─────────── О СЕБЕ ─────────── -->
 <section class="say about" id="about">
   <div class="about__sheet" id="aboutSheet">
@@ -481,5 +511,6 @@
 <script src="sound.js"></script>
 <script src="ripple.js"></script>
 <script src="main.js"></script>
+<script src="quiz.js"></script>
 </body>
 </html>
