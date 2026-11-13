@@ -37,6 +37,26 @@ function tooMany(ip) {
   return list.length > 5;
 }
 
+function dur(ms) {
+  const s = Math.max(0, Math.min(86400, Math.round(Number(ms) / 1000) || 0));
+  if (s < 60) return s + ' с';
+  return Math.floor(s / 60) + ' мин ' + (s % 60) + ' с';
+}
+
+/* Сколько человек просидел на каждом вопросе. Длинная пауза на одном
+   шаге — это и есть ответ на вопрос «что в подборе сформулировано плохо». */
+function walk(path) {
+  const rows = (Array.isArray(path) ? path : []).slice(0, 20);
+  if (!rows.length) return [];
+  const out = ['', 'Как шёл:'];
+  rows.forEach(r => {
+    const q = esc(clean(r && r.q, 120)) || '—';
+    const sec = Math.max(0, Math.min(86400, Math.round(Number(r && r.sec)) || 0));
+    out.push('  ' + q + ' — <b>' + sec + ' с</b>');
+  });
+  return out;
+}
+
 function compose(p) {
   const when = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
   const lines = [
@@ -52,7 +72,29 @@ function compose(p) {
   lines.push('Связь: <b>' + esc(clean(p.contact && p.contact.channel, 20)) + '</b> — ' +
              '<code>' + esc(clean(p.contact && p.contact.value, 60)) + '</code>');
   lines.push('Согласие на обработку данных: да, ' + esc(when) + ' (МСК)');
-  const text = lines.join('\n');
+  lines.push('Заполнял ' + dur(p.elapsed) +
+             (Number(p.backs) > 0 ? ', возвращался назад ' + Math.min(99, Number(p.backs)) : ''));
+  const text = lines.concat(walk(p.path)).join('\n');
+  return text.length > 3900 ? text.slice(0, 3900) + '\n…' : text;
+}
+
+/* Сообщение о брошенном подборе. Обезличенное: ни контактов, ни
+   написанного текста, ни файлов, ни адреса устройства. Только номер
+   шага, вопрос из моего же списка и секунды. */
+function composeDrop(p) {
+  const lines = [
+    '<b>Подбор бросили</b>',
+    'Направление: <b>' + (esc(clean(p.branch, 40)) || 'не выбрано') + '</b>',
+    'Ушёл на вопросе: <b>' + (esc(clean(p.q, 160)) || '—') + '</b>',
+    'Ответов до этого: <b>' + Math.max(0, Math.min(99, Number(p.done) || 0)) + '</b>',
+    'На подборе: <b>' + dur(p.elapsed) + '</b>'
+  ];
+  if (Number(p.backs) > 0) lines.push('Возвращался назад: ' + Math.min(99, Number(p.backs)));
+  if (Number(p.attached) > 0) lines.push('Успел приложить файлов: ' + Math.min(9, Number(p.attached)));
+  const text = lines.concat(walk(p.path)).concat([
+    '',
+    '<i>Закрыл вкладку или свернул её. Ответы не сохранены: «Отправить» не нажимали.</i>'
+  ]).join('\n');
   return text.length > 3900 ? text.slice(0, 3900) + '\n…' : text;
 }
 
@@ -94,9 +136,30 @@ async function tg(token, method, body, isForm) {
   return r.json();
 }
 
+/* ─── брошенный подбор ───
+   Отдельная ветка, и намеренно узкая: сюда не попадают ни ответы, ни
+   файлы, ни контакт, даже если их прислали. Человек не нажимал
+   «Отправить» — значит ничего из написанного им я не забираю. */
+async function drop(p, ip) {
+  if (!Array.isArray(p.path) || !p.path.length) return { status: 400, msg: 'empty' };
+  if (ip && tooMany(ip)) return { status: 429, msg: 'slow-down' };
+
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chat = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chat) return { status: 503, msg: 'not-configured' };
+
+  await tg(token, 'sendMessage', {
+    chat_id: chat, text: composeDrop(p), parse_mode: 'HTML',
+    disable_web_page_preview: true, disable_notification: true
+  });
+  return { status: 200, msg: 'ok' };
+}
+
 /* ─── собственно отправка; используется и функцией, и локальным сервером ─── */
 async function send(payload, ip) {
   const p = payload || {};
+
+  if (p.kind === 'drop') return drop(p, ip);
 
   if (p.consent !== true) return { status: 400, msg: 'no-consent' };
   if (p.trap) return { status: 200, msg: 'ok' };              /* бот, молча глотаем */

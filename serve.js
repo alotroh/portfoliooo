@@ -75,9 +75,14 @@ http.createServer((req, res) => {
       try { out = await require('./api/lead.js').send(body, '127.0.0.1'); }
       catch (e) { console.error('заявка не ушла:', e.message); out = { status: 502, msg: 'send-failed' }; }
       if (out.status === 503) {
-        const a = (body && body.answers || []).length;
-        const f = (body && body.files || []).length;
-        console.log(`заявка принята локально: ответов ${a}, файлов ${f} — токен не задан, в телеграм не ушла`);
+        if (body && body.kind === 'drop') {
+          const steps = (body.path || []).map(r => `${r.id} ${r.sec}с`).join(' → ');
+          console.log(`подбор бросили на шаге ${body.step}: ${steps} — токен не задан`);
+        } else {
+          const a = (body && body.answers || []).length;
+          const f = (body && body.files || []).length;
+          console.log(`заявка принята локально: ответов ${a}, файлов ${f} — токен не задан, в телеграм не ушла`);
+        }
         out = { status: 200, msg: 'ok' };
       }
       json(out.status, { ok: out.status === 200, error: out.status === 200 ? undefined : out.msg });

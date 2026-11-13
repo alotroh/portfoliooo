@@ -177,7 +177,11 @@
     answers: [],
     files: [],
     channel: '',
-    born: Date.now()
+    born: Date.now(),
+    t0: Date.now(),   /* когда человек увидел текущий вопрос */
+    path: [],         /* пройденные шаги и сколько секунд занял каждый */
+    backs: 0,         /* сколько раз возвращался назад */
+    sent: false
   };
 
   const has = typeof gsap !== 'undefined';
@@ -494,6 +498,7 @@
       err.textContent = '';
       send.disabled = true;
       send.textContent = 'Отправляю…';
+      stamp();
       try {
         const r = await fetch(ENDPOINT, {
           method: 'POST',
@@ -505,10 +510,13 @@
             consent: true,
             files: S.files.map(f => ({ name: f.name, type: f.type, data: f.data })),
             elapsed: Date.now() - S.born,
+            backs: S.backs,
+            path: S.path,
             trap: trap.value
           })
         });
         if (!r.ok) throw new Error('http ' + r.status);
+        S.sent = true;      /* дошёл до конца — сообщать об уходе не о чем */
         thanks(box);
       } catch (e) {
         send.disabled = false;
@@ -542,6 +550,7 @@
   function answer(q, a) { S.answers.push({ q, a }); }
 
   function go(id) {
+    stamp();
     S.history.push(S.id);
     S.id = id;
     swap();
@@ -549,11 +558,71 @@
 
   function goBack() {
     if (!S.history.length) return;
+    stamp();
+    S.backs++;
     S.answers.pop();
     S.id = S.history.pop();
     if (S.id === 'start') { S.branch = ''; S.files.length = 0; }
     swap();
   }
+
+  /* ───────────────── путь по подбору ─────────────────
+     Нужно ответить на один вопрос: где люди бросают подбор.
+     Поэтому с каждого шага берём только его номер, текст вопроса
+     и сколько секунд человек на нём просидел.
+
+     Ни одной буквы из того, что он печатал, здесь нет и быть не
+     должно: «Отправить» ещё не нажато, согласия не было, и всё
+     написанное остаётся в его браузере. */
+
+  function stamp() {
+    const step = QUIZ[S.id];
+    S.path.push({
+      id: S.id,
+      q: step ? step.q : '',
+      sec: Math.round((Date.now() - S.t0) / 1000)
+    });
+    S.t0 = Date.now();
+    if (S.path.length > 30) S.path.shift();
+  }
+
+  /* Проводить вкладку по-человечески браузер не даёт: beforeunload
+     на телефоне часто не случается вовсе, а pagehide — не всегда.
+     Единственное надёжное событие — visibilitychange на hidden: оно
+     приходит и при закрытии, и при сворачивании, и при переходе в
+     другое приложение. Платим за надёжность тем, что отойти на
+     соседнюю вкладку и вернуться тоже считается уходом.
+
+     Шлём маячком: он уходит, когда страница уже умирает, и не ждёт
+     ответа. Обычный fetch в этот момент браузер просто отменит. */
+
+  let reported = false;
+
+  function reportDrop() {
+    if (reported || S.sent) return;
+    if (!S.history.length) return;   /* только пролистал мимо — не о чем писать */
+    reported = true;
+    stamp();
+    const body = JSON.stringify({
+      kind: 'drop',
+      branch: S.branch,
+      step: S.id,
+      q: (QUIZ[S.id] && QUIZ[S.id].q) || '',
+      done: S.answers.length,
+      backs: S.backs,
+      attached: S.files.length,
+      elapsed: Date.now() - S.born,
+      path: S.path
+    });
+    try {
+      navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/json' }));
+    } catch (e) { /* не ушло — переживём, это не заявка */ }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') reportDrop();
+  });
+  window.addEventListener('pagehide', reportDrop);
 
   function swap() {
     const old = stage.firstElementChild;
