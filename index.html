@@ -28,26 +28,41 @@
            на которой краски уже мало. Без второго шума получается
            гладкая лента, а не мазок. -->
       <filter id="brush" x="-30%" y="-70%" width="160%" height="240%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.016 0.028"
+        <feTurbulence type="fractalNoise" baseFrequency="0.022 0.05"
                       numOctaves="4" seed="11" result="edge"/>
-        <feDisplacementMap in="SourceGraphic" in2="edge" scale="24"
+        <feDisplacementMap in="SourceGraphic" in2="edge" scale="16"
                            xChannelSelector="R" yChannelSelector="G" result="bent"/>
-        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.17"
+        <feTurbulence type="fractalNoise" baseFrequency="0.006 0.055"
                       numOctaves="2" seed="3" result="dry"/>
         <feColorMatrix in="dry" type="matrix" result="dryA"
-                       values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.22"/>
+                       values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.2 0 0 0 -0.3"/>
         <feComposite in="bent" in2="dryA" operator="in"/>
       </filter>
       <!-- вторая кисть, помельче, для тонких мазков -->
       <filter id="brushFine" x="-30%" y="-70%" width="160%" height="240%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.024 0.05"
+        <feTurbulence type="fractalNoise" baseFrequency="0.03 0.07"
                       numOctaves="3" seed="5" result="edge"/>
-        <feDisplacementMap in="SourceGraphic" in2="edge" scale="15"
+        <feDisplacementMap in="SourceGraphic" in2="edge" scale="11"
                            xChannelSelector="R" yChannelSelector="G" result="bent"/>
-        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.22"
+        <feTurbulence type="fractalNoise" baseFrequency="0.01 0.07"
                       numOctaves="2" seed="8" result="dry"/>
         <feColorMatrix in="dry" type="matrix" result="dryA"
-                       values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.8 0 0 0 -0.2"/>
+                       values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.4 0 0 0 -0.28"/>
+        <feComposite in="bent" in2="dryA" operator="in"/>
+      </filter>
+      <!-- Та же кисть, но прорехи вытянуты по вертикали. Сухая кисть
+           оставляет полосы ВДОЛЬ движения руки, поэтому у стоячих
+           мазков шум должен быть повёрнут — иначе они полосатые
+           поперёк и сразу видно, что это фильтр, а не краска. -->
+      <filter id="brushV" x="-70%" y="-30%" width="240%" height="160%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.07 0.03"
+                      numOctaves="3" seed="5" result="edge"/>
+        <feDisplacementMap in="SourceGraphic" in2="edge" scale="11"
+                           xChannelSelector="R" yChannelSelector="G" result="bent"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.07 0.01"
+                      numOctaves="2" seed="8" result="dry"/>
+        <feColorMatrix in="dry" type="matrix" result="dryA"
+                       values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.4 0 0 0 -0.28"/>
         <feComposite in="bent" in2="dryA" operator="in"/>
       </filter>
     </defs>
@@ -55,14 +70,29 @@
     <!-- мазки идут под разными углами и пересекаются. Параллельные
          читаются как полоски загрузки, крест-накрест — как холст -->
     <g class="intro__strokes" fill="none" stroke-linecap="round">
-      <path class="stroke" filter="url(#brush)"     stroke="#b9c48d" stroke-width="122"
-            d="M-90 585 C 280 505, 640 205, 1290 95"/>
-      <path class="stroke" filter="url(#brush)"     stroke="#e0a35c" stroke-width="96"
-            d="M-90 175 C 330 285, 770 500, 1290 440"/>
-      <path class="stroke" filter="url(#brushFine)" stroke="#8a7fa8" stroke-width="58"
-            d="M205 700 C 315 430, 520 250, 690 -70"/>
-      <path class="stroke" filter="url(#brushFine)" stroke="#c47fa0" stroke-width="16"
-            d="M-70 440 C 350 370, 830 315, 1290 230"/>
+      <!-- Пересечения разведены по кадру. Когда все мазки проходят
+           через одну точку, получается звезда или взрыв, а не холст:
+           глазу не за что зацепиться, кроме этого узла. Здесь каждая
+           пара сходится в своём месте, и между ними остаётся воздух. -->
+
+      <!-- Главный, белый. Идёт по верхней половине -->
+      <path class="stroke" filter="url(#brush)"     stroke="#f2efe8" stroke-width="86"
+            d="M-120 430 C 240 395, 620 150, 1320 92"/>
+      <!-- Встречный серый держит низ и пересекает белый у левого края -->
+      <path class="stroke" filter="url(#brush)"     stroke="#8e8c88" stroke-width="68"
+            d="M-120 250 C 330 400, 780 560, 1320 470"/>
+      <!-- Почти вертикальный увели вправо: он режет оба предыдущих,
+           но в двух разных точках, далеко от их собственной -->
+      <path class="stroke" filter="url(#brushV)"    stroke="#cfccc4" stroke-width="38"
+            d="M1010 -80 C 946 220, 880 400, 806 700"/>
+      <!-- Волосяной по низу. Один тонкий штрих на четыре широких -->
+      <path class="stroke" filter="url(#brushFine)" stroke="#e6e3db" stroke-width="11"
+            d="M-120 600 C 360 558, 870 520, 1320 556"/>
+      <!-- Чёрная краска. На тёмном фоне её почти не видно — она
+           проявляется там, где ложится на светлые мазки, и в этом
+           смысл: чёрное по белому, а не чёрное по пустоте. -->
+      <path class="stroke stroke--ink" filter="url(#brushV)" stroke="#0a0908" stroke-width="38"
+            d="M620 -80 C 676 190, 700 330, 762 700"/>
     </g>
   </svg>
 
@@ -261,7 +291,7 @@
   <div class="field__stage" id="stage">
 
     <a class="card" href="https://testrepo-one-livid.vercel.app/" target="_blank" rel="noopener"
-       style="--x:7%;--y:14%;--ry:32deg;--rx:-7deg;--rz:-5deg;--s:.78;--d:.35;--dur:19s">
+       style="--x:9%;--y:33%;--ry:32deg;--rx:-7deg;--rz:-5deg;--s:.78;--d:.35;--dur:19s">
       <span class="card__idx label">01</span>
       <span class="card__shot"><img src="media/shots/vanta.jpg" alt="Сайт VANTA" loading="lazy"></span>
       <span class="card__name">VANTA</span>
@@ -271,7 +301,7 @@
     </a>
 
     <a class="card" href="https://nor-delta.vercel.app/" target="_blank" rel="noopener"
-       style="--x:26%;--y:52%;--ry:-24deg;--rx:5deg;--rz:4deg;--s:.92;--d:.62;--dur:23s">
+       style="--x:27%;--y:61%;--ry:-24deg;--rx:5deg;--rz:4deg;--s:.92;--d:.62;--dur:23s">
       <span class="card__idx label">02</span>
       <span class="card__shot"><img src="media/shots/nor.webp" alt="Сайт NØR" loading="lazy"></span>
       <span class="card__name">NØR</span>
@@ -281,7 +311,7 @@
     </a>
 
     <a class="card is-client" href="https://elena-rieltor-neon.vercel.app/" target="_blank" rel="noopener"
-       style="--x:47%;--y:20%;--ry:14deg;--rx:-4deg;--rz:-2deg;--s:1.04;--d:.85;--dur:17s">
+       style="--x:46%;--y:39%;--ry:14deg;--rx:-4deg;--rz:-2deg;--s:1.04;--d:.85;--dur:17s">
       <span class="card__idx label">03</span>
       <span class="card__shot"><img src="media/shots/elena.webp" alt="Сайт риелтора Елены" loading="lazy"></span>
       <span class="card__name">Елена</span>
@@ -291,7 +321,7 @@
     </a>
 
     <a class="card" href="https://trohamburger.vercel.app/" target="_blank" rel="noopener"
-       style="--x:68%;--y:58%;--ry:-31deg;--rx:8deg;--rz:5deg;--s:.86;--d:.5;--dur:21s">
+       style="--x:69%;--y:67%;--ry:-31deg;--rx:8deg;--rz:5deg;--s:.86;--d:.5;--dur:21s">
       <span class="card__idx label">04</span>
       <span class="card__shot"><img src="media/shots/burger.jpg" alt="Сайт TROHAMBURGER" loading="lazy"></span>
       <span class="card__name">TROHAMBURGER</span>
@@ -301,7 +331,7 @@
     </a>
 
     <a class="card" href="https://ai-revenue-recovery-amber.vercel.app/" target="_blank" rel="noopener"
-       style="--x:84%;--y:12%;--ry:-41deg;--rx:-6deg;--rz:3deg;--s:.7;--d:.28;--dur:25s">
+       style="--x:86%;--y:35%;--ry:-41deg;--rx:-6deg;--rz:3deg;--s:.7;--d:.28;--dur:25s">
       <span class="card__idx label">05</span>
       <span class="card__shot"><img src="media/shots/pluslead.webp" alt="Сайт PlusLead" loading="lazy"></span>
       <span class="card__name">PlusLead</span>
@@ -311,7 +341,7 @@
     </a>
 
     <a class="card" href="https://beautytroh.vercel.app/" target="_blank" rel="noopener"
-       style="--x:13%;--y:74%;--ry:27deg;--rx:6deg;--rz:-6deg;--s:.74;--d:.4;--dur:22s">
+       style="--x:14%;--y:77%;--ry:27deg;--rx:6deg;--rz:-6deg;--s:.74;--d:.4;--dur:22s">
       <span class="card__idx label">06</span>
       <span class="card__shot"><img src="media/shots/beauty.jpg" alt="Сайт студии BEAUTYTROH" loading="lazy"></span>
       <span class="card__name">BEAUTYTROH</span>
@@ -322,11 +352,11 @@
 
     <!-- рубашки: только глубина, кликать нечего -->
     <span class="card card--back" aria-hidden="true"
-      style="--x:38%;--y:80%;--ry:-38deg;--rx:10deg;--rz:7deg;--s:.6;--d:.2;--dur:27s;--b:#b9c48d"></span>
+      style="--x:38%;--y:82%;--ry:-38deg;--rx:10deg;--rz:7deg;--s:.6;--d:.2;--dur:27s;--b:#b9c48d"></span>
     <span class="card card--back" aria-hidden="true"
-      style="--x:60%;--y:6%;--ry:44deg;--rx:-9deg;--rz:-6deg;--s:.52;--d:.16;--dur:30s;--b:#8a7fa8"></span>
+      style="--x:60%;--y:27%;--ry:44deg;--rx:-9deg;--rz:-6deg;--s:.52;--d:.16;--dur:30s;--b:#8a7fa8"></span>
     <span class="card card--back" aria-hidden="true"
-      style="--x:92%;--y:66%;--ry:-20deg;--rx:4deg;--rz:8deg;--s:.64;--d:.24;--dur:24s;--b:#c4844a"></span>
+      style="--x:92%;--y:70%;--ry:-20deg;--rx:4deg;--rz:8deg;--s:.64;--d:.24;--dur:24s;--b:#c4844a"></span>
   </div>
  </div>
 </section>
