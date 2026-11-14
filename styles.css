@@ -777,7 +777,7 @@ a{color:inherit;text-decoration:none}
   transition:transform .6s var(--e-reveal);
 }
 .quiz__card img{
-  width:100%;aspect-ratio:4/5;object-fit:cover;display:block;
+  width:100%;aspect-ratio:16/10;object-fit:cover;display:block;
   border-radius:4px;background:#e2dbcd;
   filter:grayscale(.3) contrast(1.02);
   transition:filter .55s var(--e-ui), box-shadow .55s var(--e-ui);

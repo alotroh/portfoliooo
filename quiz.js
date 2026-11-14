@@ -21,13 +21,13 @@
       q: 'Что сейчас ты рассматриваешь?',
       kind: 'cards',
       opts: [
-        { img: 'media/quiz/pretty.svg', cap: 'Хочу привлекательный сайт для своего бизнеса',
+        { img: 'media/quiz/pretty.webp', cap: 'Хочу привлекательный сайт для своего бизнеса',
           branch: 'Красивый', next: 'a1' },
-        { img: 'media/quiz/sell.svg',   cap: 'Хочу продающий сайт',
+        { img: 'media/quiz/sell.webp',   cap: 'Хочу продающий сайт',
           branch: 'Продающий', next: 'b1' },
-        { img: 'media/quiz/profit.svg', cap: 'Хочу сайт, который увеличит мою прибыль',
+        { img: 'media/quiz/profit.webp', cap: 'Хочу сайт, который увеличит мою прибыль',
           branch: 'Прибыль', next: 'c1' },
-        { img: 'media/quiz/hybrid.svg', cap: 'Я бы хотел сайт-гибрид',
+        { img: 'media/quiz/hybrid.webp', cap: 'Я бы хотел сайт-гибрид',
           branch: 'Гибрид', next: 'd1' }
       ]
     },
